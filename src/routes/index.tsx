@@ -35,6 +35,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { AppTopbar } from "@/components/AppTopbar";
 
 export const Route = createFileRoute("/")({
   head: () => ({
