@@ -11,12 +11,17 @@ import {
   Wheat,
 } from "lucide-react";
 
-const navGroups = [
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  exact?: boolean;
+};
+
+const navGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Pilotage",
-    items: [
-      { to: "/", label: "Tableau de bord", icon: LayoutDashboard, exact: true },
-    ],
+    items: [{ to: "/", label: "Tableau de bord", icon: LayoutDashboard, exact: true }],
   },
   {
     label: "Chaîne de valeur",
@@ -32,7 +37,7 @@ const navGroups = [
     label: "Accès dédié",
     items: [{ to: "/partenaires", label: "Portail Partenaires", icon: Users }],
   },
-] as const;
+];
 
 export function AppSidebar() {
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
