@@ -536,9 +536,8 @@ function Dashboard() {
           <footer className="pt-2 pb-6 text-center text-[11px] text-muted-foreground">
             CAPI · Complexe Agro Pastoral & Industriel — Prototype V1 du tableau de bord global
           </footer>
-        </div>
-      </main>
-    </div>
+      </div>
+    </>
   );
 }
 
