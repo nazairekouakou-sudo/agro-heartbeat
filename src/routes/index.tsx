@@ -157,82 +157,10 @@ function Dashboard() {
   );
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
-      {/* Sidebar */}
-      <aside className="hidden lg:flex w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
-        <div className="px-6 py-6 flex items-center gap-3 border-b border-sidebar-border">
-          <div className="size-10 rounded-lg gradient-gold flex items-center justify-center shadow-lg">
-            <Wheat className="size-5 text-primary" />
-          </div>
-          <div>
-            <div className="font-display text-lg leading-none tracking-tight">CAPI</div>
-            <div className="text-[11px] uppercase tracking-widest text-sidebar-foreground/60 mt-1">
-              ERP · Riz
-            </div>
-          </div>
-        </div>
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {nav.map((item) => (
-            <button
-              key={item.label}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors ${
-                item.active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
-                  : "hover:bg-sidebar-accent/50 text-sidebar-foreground/80"
-              }`}
-            >
-              <item.icon className="size-4" />
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="p-4 border-t border-sidebar-border">
-          <div className="rounded-lg bg-sidebar-accent/50 p-3">
-            <div className="flex items-center gap-2 text-xs">
-              <CircleDot className="size-3 text-gold" />
-              <span className="text-sidebar-foreground/80">Campagne 2024-2025</span>
-            </div>
-            <div className="mt-2 font-display text-xl text-sidebar-foreground">Actif</div>
-            <div className="mt-1 text-[11px] text-sidebar-foreground/60">
-              Site pilote · Saint-Louis
-            </div>
-          </div>
-        </div>
-      </aside>
+    <>
+      <AppTopbar eyebrow="Administration" title="Tableau de bord global" />
+      <div className="p-6 space-y-6 overflow-y-auto">
 
-      {/* Main */}
-      <main className="flex-1 flex flex-col min-w-0">
-        {/* Topbar */}
-        <header className="h-16 border-b border-border bg-card/60 backdrop-blur px-6 flex items-center gap-4">
-          <div>
-            <div className="text-[11px] uppercase tracking-widest text-muted-foreground">
-              Administration
-            </div>
-            <h1 className="font-display text-lg leading-tight">Tableau de bord global</h1>
-          </div>
-          <div className="flex-1 max-w-md ml-auto relative">
-            <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              placeholder="Rechercher un lot, partenaire, facture…"
-              className="w-full h-9 pl-9 pr-3 rounded-md bg-muted/60 border border-transparent focus:border-ring focus:bg-card outline-none text-sm"
-            />
-          </div>
-          <button className="relative size-9 rounded-md bg-muted/60 hover:bg-muted flex items-center justify-center">
-            <Bell className="size-4" />
-            <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-gold" />
-          </button>
-          <div className="flex items-center gap-3 pl-3 border-l border-border">
-            <div className="text-right hidden sm:block">
-              <div className="text-sm font-medium leading-tight">A. Ndiaye</div>
-              <div className="text-[11px] text-muted-foreground">Admin CAPI</div>
-            </div>
-            <div className="size-9 rounded-full gradient-primary text-primary-foreground flex items-center justify-center text-sm font-semibold">
-              AN
-            </div>
-          </div>
-        </header>
-
-        <div className="p-6 space-y-6 overflow-y-auto">
           {/* Hero band */}
           <section className="card-elevated overflow-hidden relative">
             <div className="absolute inset-0 gradient-primary opacity-[0.97]" />
