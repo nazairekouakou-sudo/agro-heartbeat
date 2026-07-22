@@ -50,7 +50,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "Suivi en temps réel des trois modèles d'activités du CAPI : compte propre, partenaires, prestations.",
+          "Pilotage temps réel du Complexe Agro Pastoral & Industriel : paddy, usinage, commercial et partenaires.",
       },
       { property: "og:type", content: "website" },
     ],

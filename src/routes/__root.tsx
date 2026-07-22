@@ -80,13 +80,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "CAPI ERP — Pilotage temps réel de la filière riz" },
+      { title: "CAPI ERP — Tableau de bord global" },
       {
         name: "description",
         content:
-          "ERP du Complexe Agro Pastoral & Industriel : suivi temps réel paddy, usinage, commercial et partenaires.",
+          "Pilotage temps réel du Complexe Agro Pastoral & Industriel : paddy, usinage, commercial et partenaires.",
       },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:title", content: "CAPI ERP — Tableau de bord global" },
+      { name: "twitter:title", content: "CAPI ERP — Tableau de bord global" },
+      { property: "og:description", content: "Pilotage temps réel du Complexe Agro Pastoral & Industriel : paddy, usinage, commercial et partenaires." },
+      { name: "twitter:description", content: "Pilotage temps réel du Complexe Agro Pastoral & Industriel : paddy, usinage, commercial et partenaires." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/10de8233-137f-47b8-93a8-839465405c26/id-preview-62970ba1--6c71da14-fafa-457e-a49e-e393b274c540.lovable.app-1784745301946.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/10de8233-137f-47b8-93a8-839465405c26/id-preview-62970ba1--6c71da14-fafa-457e-a49e-e393b274c540.lovable.app-1784745301946.png" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
