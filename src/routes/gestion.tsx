@@ -1,3 +1,4 @@
+import { RequireRole } from "@/components/RequireRole";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppTopbar } from "@/components/AppTopbar";
@@ -105,6 +106,7 @@ function GestionPage() {
   const aValiderCount = useMemo(() => validations.filter((v) => v.status === "en_attente").length, [validations]);
 
   return (
+    <RequireRole roles={["admin", "gestion"]}>
     <>
       <AppTopbar eyebrow="Chaîne de valeur" title="Service Gestion" />
       <div className="p-6 space-y-6 overflow-y-auto">
@@ -236,6 +238,7 @@ function GestionPage() {
 
       <NewSortieRizDialog open={openSortie} onClose={() => setOpenSortie(false)} decorticages={decorticages} />
     </>
+    </RequireRole>
   );
 }
 

@@ -1,3 +1,4 @@
+import { RequireRole } from "@/components/RequireRole";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppTopbar } from "@/components/AppTopbar";
@@ -120,6 +121,7 @@ function PartenairesPage() {
   );
 
   return (
+    <RequireRole roles={["admin", "partenaire"]}>
     <>
       <AppTopbar eyebrow="Accès dédié" title="Portail Partenaires" />
       <div className="p-6 space-y-6 overflow-y-auto">
@@ -185,5 +187,6 @@ function PartenairesPage() {
         )}
       </div>
     </>
+    </RequireRole>
   );
 }

@@ -9,40 +9,58 @@ import {
   Users,
   CircleDot,
   Wheat,
+  LogOut,
 } from "lucide-react";
+import { useAuth, authActions, type AppRole } from "@/lib/authStore";
 
 type NavItem = {
   to: string;
   label: string;
   icon: typeof LayoutDashboard;
   exact?: boolean;
+  roles: AppRole[];
 };
 
-const navGroups: { label: string; items: NavItem[] }[] = [
+const allNavGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Pilotage",
-    items: [{ to: "/", label: "Tableau de bord", icon: LayoutDashboard, exact: true }],
+    items: [
+      {
+        to: "/",
+        label: "Tableau de bord",
+        icon: LayoutDashboard,
+        exact: true,
+        roles: ["admin", "paddy", "usinage", "gestion", "commercial", "comptable", "partenaire"],
+      },
+    ],
   },
   {
     label: "Chaîne de valeur",
     items: [
-      { to: "/paddy", label: "Service Paddy", icon: Sprout },
-      { to: "/usinage", label: "Service Usinage", icon: Factory },
-      { to: "/gestion", label: "Service Gestion", icon: ClipboardCheck },
-      { to: "/commercial", label: "Service Commercial", icon: ShoppingCart },
-      { to: "/comptable", label: "Service Comptable", icon: Wallet },
+      { to: "/paddy", label: "Service Paddy", icon: Sprout, roles: ["admin", "paddy"] },
+      { to: "/usinage", label: "Service Usinage", icon: Factory, roles: ["admin", "usinage"] },
+      { to: "/gestion", label: "Service Gestion", icon: ClipboardCheck, roles: ["admin", "gestion"] },
+      { to: "/commercial", label: "Service Commercial", icon: ShoppingCart, roles: ["admin", "commercial"] },
+      { to: "/comptable", label: "Service Comptable", icon: Wallet, roles: ["admin", "comptable"] },
     ],
   },
   {
     label: "Accès dédié",
-    items: [{ to: "/partenaires", label: "Portail Partenaires", icon: Users }],
+    items: [{ to: "/partenaires", label: "Portail Partenaires", icon: Users, roles: ["admin", "partenaire"] }],
   },
 ];
 
 export function AppSidebar() {
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
+  const { status, profile } = useAuth();
   const isActive = (to: string, exact?: boolean) =>
     exact ? currentPath === to : currentPath === to || currentPath.startsWith(`${to}/`);
+
+  if (status !== "signed-in" || !profile) return null;
+
+  const navGroups = allNavGroups
+    .map((g) => ({ ...g, items: g.items.filter((i) => i.roles.includes(profile.role)) }))
+    .filter((g) => g.items.length > 0);
 
   return (
     <aside className="hidden lg:flex w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border shrink-0">
@@ -85,7 +103,7 @@ export function AppSidebar() {
           </div>
         ))}
       </nav>
-      <div className="p-4 border-t border-sidebar-border">
+      <div className="p-4 border-t border-sidebar-border space-y-3">
         <div className="rounded-lg bg-sidebar-accent/50 p-3">
           <div className="flex items-center gap-2 text-xs">
             <CircleDot className="size-3 text-gold" />
@@ -93,9 +111,15 @@ export function AppSidebar() {
           </div>
           <div className="mt-2 font-display text-xl text-sidebar-foreground">Actif</div>
           <div className="mt-1 text-[11px] text-sidebar-foreground/60">
-            Site pilote · Saint-Louis
+            {profile.fullName}
           </div>
         </div>
+        <button
+          onClick={() => authActions.signOut()}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
+        >
+          <LogOut className="size-4" /> Déconnexion
+        </button>
       </div>
     </aside>
   );

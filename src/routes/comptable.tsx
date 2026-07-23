@@ -1,3 +1,4 @@
+import { RequireRole } from "@/components/RequireRole";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppTopbar } from "@/components/AppTopbar";
@@ -143,6 +144,7 @@ function ComptablePage() {
   const rentabilite = recettesCumulees > 0 ? ((recettesCumulees - depensesCumulees) / recettesCumulees) * 100 : 0;
 
   return (
+    <RequireRole roles={["admin", "comptable"]}>
     <>
       <AppTopbar eyebrow="Chaîne de valeur" title="Service Comptable" />
       <div className="p-6 space-y-6 overflow-y-auto">
@@ -200,6 +202,7 @@ function ComptablePage() {
         </div>
       </div>
     </>
+    </RequireRole>
   );
 }
 

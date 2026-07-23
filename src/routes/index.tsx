@@ -1,3 +1,4 @@
+import { RequireRole } from "@/components/RequireRole";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import {
@@ -158,6 +159,7 @@ function Dashboard() {
   );
 
   return (
+    <RequireRole roles={["admin", "paddy", "usinage", "gestion", "commercial", "comptable", "partenaire"]}>
     <>
       <AppTopbar eyebrow="Administration" title="Tableau de bord global" />
       <div className="p-6 space-y-6 overflow-y-auto">
@@ -539,6 +541,7 @@ function Dashboard() {
           </footer>
       </div>
     </>
+    </RequireRole>
   );
 }
 

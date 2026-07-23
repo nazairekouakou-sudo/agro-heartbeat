@@ -1,3 +1,4 @@
+import { RequireRole } from "@/components/RequireRole";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppTopbar } from "@/components/AppTopbar";
@@ -51,6 +52,7 @@ function PaddyPage() {
   const enSechage = appros.filter((a) => a.status === "En séchage").length;
 
   return (
+    <RequireRole roles={["admin", "paddy"]}>
     <>
       <AppTopbar eyebrow="Chaîne de valeur" title="Service Paddy" />
       <div className="p-6 space-y-6 overflow-y-auto">
@@ -180,6 +182,7 @@ function PaddyPage() {
       <NewSortieDialog open={openNew === "sortie"} onClose={() => setOpenNew(null)} />
       <LotDetailSheet lotId={detailLot} onClose={() => setDetailLot(null)} />
     </>
+    </RequireRole>
   );
 }
 

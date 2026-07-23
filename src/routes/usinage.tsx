@@ -1,3 +1,4 @@
+import { RequireRole } from "@/components/RequireRole";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppTopbar } from "@/components/AppTopbar";
@@ -56,6 +57,7 @@ function UsinagePage() {
   }, [tries, query]);
 
   return (
+    <RequireRole roles={["admin", "usinage"]}>
     <>
       <AppTopbar eyebrow="Chaîne de valeur" title="Service Usinage" />
       <div className="p-6 space-y-6 overflow-y-auto">
@@ -184,6 +186,7 @@ function UsinagePage() {
       <NewDecorticageDialog open={openNew === "dec"} onClose={() => setOpenNew(null)} />
       <NewTrieDialog open={openNew === "trie"} onClose={() => setOpenNew(null)} />
     </>
+    </RequireRole>
   );
 }
 

@@ -9,37 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UsinageRouteImport } from './routes/usinage'
-import { Route as PartenairesRouteImport } from './routes/partenaires'
-import { Route as PaddyRouteImport } from './routes/paddy'
-import { Route as GestionRouteImport } from './routes/gestion'
-import { Route as ComptableRouteImport } from './routes/comptable'
-import { Route as CommercialRouteImport } from './routes/commercial'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminSetupRouteImport } from './routes/admin-setup'
+import { Route as CommercialRouteImport } from './routes/commercial'
+import { Route as ComptableRouteImport } from './routes/comptable'
+import { Route as GestionRouteImport } from './routes/gestion'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as PaddyRouteImport } from './routes/paddy'
+import { Route as PartenairesRouteImport } from './routes/partenaires'
+import { Route as UsinageRouteImport } from './routes/usinage'
 
-const UsinageRoute = UsinageRouteImport.update({
-  id: '/usinage',
-  path: '/usinage',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PartenairesRoute = PartenairesRouteImport.update({
-  id: '/partenaires',
-  path: '/partenaires',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PaddyRoute = PaddyRouteImport.update({
-  id: '/paddy',
-  path: '/paddy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GestionRoute = GestionRouteImport.update({
-  id: '/gestion',
-  path: '/gestion',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ComptableRoute = ComptableRouteImport.update({
-  id: '/comptable',
-  path: '/comptable',
+const AdminSetupRoute = AdminSetupRouteImport.update({
+  id: '/admin-setup',
+  path: '/admin-setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CommercialRoute = CommercialRouteImport.update({
@@ -47,26 +34,55 @@ const CommercialRoute = CommercialRouteImport.update({
   path: '/commercial',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ComptableRoute = ComptableRouteImport.update({
+  id: '/comptable',
+  path: '/comptable',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GestionRoute = GestionRouteImport.update({
+  id: '/gestion',
+  path: '/gestion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaddyRoute = PaddyRouteImport.update({
+  id: '/paddy',
+  path: '/paddy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartenairesRoute = PartenairesRouteImport.update({
+  id: '/partenaires',
+  path: '/partenaires',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UsinageRoute = UsinageRouteImport.update({
+  id: '/usinage',
+  path: '/usinage',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin-setup': typeof AdminSetupRoute
   '/commercial': typeof CommercialRoute
   '/comptable': typeof ComptableRoute
   '/gestion': typeof GestionRoute
+  '/login': typeof LoginRoute
   '/paddy': typeof PaddyRoute
   '/partenaires': typeof PartenairesRoute
   '/usinage': typeof UsinageRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin-setup': typeof AdminSetupRoute
   '/commercial': typeof CommercialRoute
   '/comptable': typeof ComptableRoute
   '/gestion': typeof GestionRoute
+  '/login': typeof LoginRoute
   '/paddy': typeof PaddyRoute
   '/partenaires': typeof PartenairesRoute
   '/usinage': typeof UsinageRoute
@@ -74,9 +90,11 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin-setup': typeof AdminSetupRoute
   '/commercial': typeof CommercialRoute
   '/comptable': typeof ComptableRoute
   '/gestion': typeof GestionRoute
+  '/login': typeof LoginRoute
   '/paddy': typeof PaddyRoute
   '/partenaires': typeof PartenairesRoute
   '/usinage': typeof UsinageRoute
@@ -85,27 +103,33 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin-setup'
     | '/commercial'
     | '/comptable'
     | '/gestion'
+    | '/login'
     | '/paddy'
     | '/partenaires'
     | '/usinage'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin-setup'
     | '/commercial'
     | '/comptable'
     | '/gestion'
+    | '/login'
     | '/paddy'
     | '/partenaires'
     | '/usinage'
   id:
     | '__root__'
     | '/'
+    | '/admin-setup'
     | '/commercial'
     | '/comptable'
     | '/gestion'
+    | '/login'
     | '/paddy'
     | '/partenaires'
     | '/usinage'
@@ -113,9 +137,11 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminSetupRoute: typeof AdminSetupRoute
   CommercialRoute: typeof CommercialRoute
   ComptableRoute: typeof ComptableRoute
   GestionRoute: typeof GestionRoute
+  LoginRoute: typeof LoginRoute
   PaddyRoute: typeof PaddyRoute
   PartenairesRoute: typeof PartenairesRoute
   UsinageRoute: typeof UsinageRoute
@@ -123,39 +149,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/usinage': {
-      id: '/usinage'
-      path: '/usinage'
-      fullPath: '/usinage'
-      preLoaderRoute: typeof UsinageRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/partenaires': {
-      id: '/partenaires'
-      path: '/partenaires'
-      fullPath: '/partenaires'
-      preLoaderRoute: typeof PartenairesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/paddy': {
-      id: '/paddy'
-      path: '/paddy'
-      fullPath: '/paddy'
-      preLoaderRoute: typeof PaddyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/gestion': {
-      id: '/gestion'
-      path: '/gestion'
-      fullPath: '/gestion'
-      preLoaderRoute: typeof GestionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/comptable': {
-      id: '/comptable'
-      path: '/comptable'
-      fullPath: '/comptable'
-      preLoaderRoute: typeof ComptableRouteImport
+    '/admin-setup': {
+      id: '/admin-setup'
+      path: '/admin-setup'
+      fullPath: '/admin-setup'
+      preLoaderRoute: typeof AdminSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/commercial': {
@@ -165,11 +170,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CommercialRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/comptable': {
+      id: '/comptable'
+      path: '/comptable'
+      fullPath: '/comptable'
+      preLoaderRoute: typeof ComptableRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gestion': {
+      id: '/gestion'
+      path: '/gestion'
+      fullPath: '/gestion'
+      preLoaderRoute: typeof GestionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paddy': {
+      id: '/paddy'
+      path: '/paddy'
+      fullPath: '/paddy'
+      preLoaderRoute: typeof PaddyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partenaires': {
+      id: '/partenaires'
+      path: '/partenaires'
+      fullPath: '/partenaires'
+      preLoaderRoute: typeof PartenairesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/usinage': {
+      id: '/usinage'
+      path: '/usinage'
+      fullPath: '/usinage'
+      preLoaderRoute: typeof UsinageRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -177,9 +217,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminSetupRoute: AdminSetupRoute,
   CommercialRoute: CommercialRoute,
   ComptableRoute: ComptableRoute,
   GestionRoute: GestionRoute,
+  LoginRoute: LoginRoute,
   PaddyRoute: PaddyRoute,
   PartenairesRoute: PartenairesRoute,
   UsinageRoute: UsinageRoute,
@@ -187,3 +229,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

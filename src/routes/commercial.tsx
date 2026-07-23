@@ -1,3 +1,4 @@
+import { RequireRole } from "@/components/RequireRole";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AppTopbar } from "@/components/AppTopbar";
@@ -78,6 +79,7 @@ function CommercialPage() {
   }, [ventes]);
 
   return (
+    <RequireRole roles={["admin", "commercial"]}>
     <>
       <AppTopbar eyebrow="Chaîne de valeur" title="Service Commercial" />
       <div className="p-6 space-y-6 overflow-y-auto">
@@ -179,6 +181,7 @@ function CommercialPage() {
       <NewVenteDialog open={openVente} onClose={() => setOpenVente(false)} />
       <NewVersementDialog open={openVersement} onClose={() => setOpenVersement(false)} />
     </>
+    </RequireRole>
   );
 }
 
