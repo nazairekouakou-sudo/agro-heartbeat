@@ -3,11 +3,16 @@ import { useState } from "react";
 import { AppTopbar } from "@/components/AppTopbar";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaseClient";
+import { RequireRole } from "@/components/RequireRole";
 import type { AppRole } from "@/lib/authStore";
 
 export const Route = createFileRoute("/admin-setup")({
   head: () => ({ meta: [{ title: "Configuration initiale — CAPI ERP" }] }),
-  component: AdminSetupPage,
+  component: () => (
+    <RequireRole roles={["admin"]}>
+      <AdminSetupPage />
+    </RequireRole>
+  ),
 });
 
 const EMPLOYEES: { fullName: string; fonction: string; role: AppRole; pin: string }[] = [

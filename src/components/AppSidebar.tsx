@@ -10,6 +10,7 @@ import {
   CircleDot,
   Wheat,
   LogOut,
+  UserCog,
 } from "lucide-react";
 import { useAuth, authActions, type AppRole } from "@/lib/authStore";
 
@@ -47,6 +48,10 @@ const allNavGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Accès dédié",
     items: [{ to: "/partenaires", label: "Portail Partenaires", icon: Users, roles: ["admin", "partenaire"] }],
+  },
+  {
+    label: "Administration",
+    items: [{ to: "/admin-utilisateurs", label: "Gestion des comptes", icon: UserCog, roles: ["admin"] }],
   },
 ];
 
