@@ -14,6 +14,7 @@ export type SortieRiz = {
   quantite: number;
   prixVente: number;
   montant: number;
+  boutique: string | null;
 };
 
 export type ValidationStatus = "en_attente" | "validee" | "rejetee";
@@ -61,7 +62,7 @@ function sortieRizFromRow(r: any): SortieRiz {
   return {
     id: r.id, date: r.date, commandeId: r.commande_id, lotId: r.lot_id,
     categorie: r.categorie, quantite: Number(r.quantite), prixVente: Number(r.prix_vente),
-    montant: Number(r.montant),
+    montant: Number(r.montant), boutique: r.boutique ?? null,
   };
 }
 
@@ -132,6 +133,7 @@ export const gestionActions = {
       .insert({
         id, date: input.date, commande_id: input.commandeId, lot_id: input.lotId,
         categorie: input.categorie, quantite: input.quantite, prix_vente: input.prixVente,
+        boutique: input.boutique,
       })
       .then(({ error }) => {
         if (error) {

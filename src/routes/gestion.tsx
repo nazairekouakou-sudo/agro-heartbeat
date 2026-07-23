@@ -281,6 +281,7 @@ function NewSortieRizDialog({
       categorie: form.categorie,
       quantite: form.quantite,
       prixVente: form.prixVente,
+      boutique: null,
     });
     toast.success(`Sortie ${id} enregistrée.`);
     onClose();
