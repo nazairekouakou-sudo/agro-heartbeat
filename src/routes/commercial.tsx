@@ -194,7 +194,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-const rizCategories: RizCategorie[] = ["LG + 1X", "2X Cassé", "Fine Brisure"];
+const rizCategories: RizCategorie[] = ["Riz blanc", "2X Cassé", "Fine Brisure"];
 
 function NewCommandeDialog({
   open, onClose, decorticages, existingCount,
@@ -205,7 +205,7 @@ function NewCommandeDialog({
   const [form, setForm] = useState({
     date: gestionActions.todayISO(),
     lotId: lotIds[0] ?? "",
-    categorie: "LG + 1X" as RizCategorie,
+    categorie: "Riz blanc" as RizCategorie,
     quantite: 0,
     prixVente: 550,
     boutique: BOUTIQUES[0] as string,
@@ -294,7 +294,7 @@ function NewVenteDialog({ open, onClose }: { open: boolean; onClose: () => void 
               <SelectContent>{BOUTIQUES.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
             </Select>
           </Field>
-          <Field label="Produit"><Input value={form.produit} placeholder="PAD-2607-0221 · LG+1X" onChange={(e) => setForm({ ...form, produit: e.target.value })} /></Field>
+          <Field label="Produit"><Input value={form.produit} placeholder="PAD-2607-0221 · Riz blanc" onChange={(e) => setForm({ ...form, produit: e.target.value })} /></Field>
           <Field label="Prix de vente (FCFA/kg)"><Input type="number" value={form.prixVente || ""} onChange={(e) => setForm({ ...form, prixVente: Number(e.target.value) })} /></Field>
           <Field label="Stock initial (kg)"><Input type="number" value={form.stockInitial || ""} onChange={(e) => setForm({ ...form, stockInitial: Number(e.target.value) })} /></Field>
           <Field label="Entrée (kg)"><Input type="number" value={form.entree || ""} onChange={(e) => setForm({ ...form, entree: Number(e.target.value) })} /></Field>

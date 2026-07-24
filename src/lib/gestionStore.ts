@@ -3,7 +3,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "./supabaseClient";
 
-export type RizCategorie = "LG + 1X" | "2X Cassé" | "Fine Brisure";
+export type RizCategorie = "Riz blanc" | "2X Cassé" | "Fine Brisure";
 
 export type SortieRiz = {
   id: string;

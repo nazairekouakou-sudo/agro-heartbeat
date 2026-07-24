@@ -18,6 +18,7 @@ import { Route as GestionRouteImport } from './routes/gestion'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PaddyRouteImport } from './routes/paddy'
 import { Route as PartenairesRouteImport } from './routes/partenaires'
+import { Route as ReportingRouteImport } from './routes/reporting'
 import { Route as UsinageRouteImport } from './routes/usinage'
 
 const IndexRoute = IndexRouteImport.update({
@@ -65,6 +66,11 @@ const PartenairesRoute = PartenairesRouteImport.update({
   path: '/partenaires',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportingRoute = ReportingRouteImport.update({
+  id: '/reporting',
+  path: '/reporting',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UsinageRoute = UsinageRouteImport.update({
   id: '/usinage',
   path: '/usinage',
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/paddy': typeof PaddyRoute
   '/partenaires': typeof PartenairesRoute
+  '/reporting': typeof ReportingRoute
   '/usinage': typeof UsinageRoute
 }
 export interface FileRoutesByTo {
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/paddy': typeof PaddyRoute
   '/partenaires': typeof PartenairesRoute
+  '/reporting': typeof ReportingRoute
   '/usinage': typeof UsinageRoute
 }
 export interface FileRoutesById {
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/paddy': typeof PaddyRoute
   '/partenaires': typeof PartenairesRoute
+  '/reporting': typeof ReportingRoute
   '/usinage': typeof UsinageRoute
 }
 export interface FileRouteTypes {
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/paddy'
     | '/partenaires'
+    | '/reporting'
     | '/usinage'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/paddy'
     | '/partenaires'
+    | '/reporting'
     | '/usinage'
   id:
     | '__root__'
@@ -144,6 +155,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/paddy'
     | '/partenaires'
+    | '/reporting'
     | '/usinage'
   fileRoutesById: FileRoutesById
 }
@@ -157,6 +169,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PaddyRoute: typeof PaddyRoute
   PartenairesRoute: typeof PartenairesRoute
+  ReportingRoute: typeof ReportingRoute
   UsinageRoute: typeof UsinageRoute
 }
 
@@ -225,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartenairesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reporting': {
+      id: '/reporting'
+      path: '/reporting'
+      fullPath: '/reporting'
+      preLoaderRoute: typeof ReportingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/usinage': {
       id: '/usinage'
       path: '/usinage'
@@ -245,6 +265,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PaddyRoute: PaddyRoute,
   PartenairesRoute: PartenairesRoute,
+  ReportingRoute: ReportingRoute,
   UsinageRoute: UsinageRoute,
 }
 export const routeTree = rootRouteImport

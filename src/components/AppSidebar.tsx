@@ -11,6 +11,7 @@ import {
   Wheat,
   LogOut,
   UserCog,
+  FileBarChart,
 } from "lucide-react";
 import { useAuth, authActions, type AppRole } from "@/lib/authStore";
 
@@ -33,6 +34,7 @@ const allNavGroups: { label: string; items: NavItem[] }[] = [
         exact: true,
         roles: ["admin", "paddy", "usinage", "gestion", "commercial", "comptable", "partenaire"],
       },
+      { to: "/reporting", label: "Reporting", icon: FileBarChart, roles: ["admin", "gestion"] },
     ],
   },
   {

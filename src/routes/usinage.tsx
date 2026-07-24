@@ -106,7 +106,7 @@ function UsinagePage() {
 
         {tab === "decorticage" && (
           <DataTable
-            columns={["Date", "N° Lot", "Sacs", "Paddy (kg)", "TH", "LG+1X", "2X Cassé", "FB", "Riz blanchi", "Rendement", "Taux cassé", "Qualité", "Équipe"]}
+            columns={["Date", "N° Lot", "Sacs", "Paddy (kg)", "TH", "Riz blanc", "2X Cassé", "FB", "Riz blanchi", "Rendement", "Taux cassé", "Qualité", "Équipe"]}
             rows={filteredDec.map((d) => [
               fmtDate(d.date), d.lotId, d.sacs,
               d.poidsPaddy.toLocaleString("fr-FR"),
@@ -331,7 +331,7 @@ function NewDecorticageDialog({ open, onClose }: { open: boolean; onClose: () =>
         <div className="mt-2 pt-4 border-t border-border">
           <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">Sortie décorticage</div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Field label="LG + 1X (kg)"><Input type="number" value={form.lg1x || ""} onChange={(e) => setForm({ ...form, lg1x: +e.target.value })} /></Field>
+            <Field label="Riz blanc (kg)"><Input type="number" value={form.lg1x || ""} onChange={(e) => setForm({ ...form, lg1x: +e.target.value })} /></Field>
             <Field label="2X Cassé (kg)"><Input type="number" value={form.casse2x || ""} onChange={(e) => setForm({ ...form, casse2x: +e.target.value })} /></Field>
             <Field label="FB (kg)"><Input type="number" value={form.fb || ""} onChange={(e) => setForm({ ...form, fb: +e.target.value })} /></Field>
             <Field label="PU usinage (F/kg)"><Input type="number" value={form.puUsinage} onChange={(e) => setForm({ ...form, puUsinage: +e.target.value })} /></Field>
