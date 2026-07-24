@@ -30,6 +30,9 @@ export type Validation = {
   createdAt: string;
   resolvedAt: string | null;
   resolvedBy: string | null;
+  paid: boolean;
+  paidAt: string | null;
+  paidBy: string | null;
 };
 
 type State = { sortiesRiz: SortieRiz[]; validations: Validation[]; loaded: boolean };
@@ -72,6 +75,7 @@ function validationFromRow(r: any): Validation {
     id: r.id, ref: r.ref, service: r.service, montant: r.montant, status: r.status,
     sourceTable: r.source_table, sourceId: r.source_id, createdAt: r.created_at,
     resolvedAt: r.resolved_at, resolvedBy: r.resolved_by,
+    paid: r.paid ?? false, paidAt: r.paid_at ?? null, paidBy: r.paid_by ?? null,
   };
 }
 
@@ -164,6 +168,25 @@ export const gestionActions = {
       .eq("id", id);
     if (error) {
       console.error("[gestionStore] resolveValidation:", error.message);
+      refetchAll();
+    }
+  },
+
+  async payValidation(id: string, paidBy = "Comptabilité CAPI") {
+    state = {
+      ...state,
+      validations: state.validations.map((v) =>
+        v.id === id ? { ...v, paid: true, paidAt: new Date().toISOString(), paidBy } : v,
+      ),
+    };
+    emit();
+
+    const { error } = await supabase
+      .from("validations")
+      .update({ paid: true, paid_at: new Date().toISOString(), paid_by: paidBy })
+      .eq("id", id);
+    if (error) {
+      console.error("[gestionStore] payValidation:", error.message);
       refetchAll();
     }
   },

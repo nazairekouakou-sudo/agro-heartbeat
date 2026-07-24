@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { usePaddy, type Appro, type LotStatus } from "@/lib/paddyStore";
 import { useUsinage, type Decorticage } from "@/lib/usinageStore";
 import { useGestion, gestionActions, type RizCategorie } from "@/lib/gestionStore";
+import { useAuth } from "@/lib/authStore";
 
 export const Route = createFileRoute("/gestion")({
   head: () => ({
@@ -57,6 +58,8 @@ function statusTone(status: LotStatus): "ok" | "warn" | "muted" {
 function GestionPage() {
   const [tab, setTab] = useState<TabId>("stock-paddy");
   const [openSortie, setOpenSortie] = useState(false);
+  const { profile } = useAuth();
+  const resolvedBy = profile?.fullName ?? "Gestion CAPI";
 
   const { appros, sechages, sorties } = usePaddy();
   const { decorticages, tries } = useUsinage();
@@ -210,7 +213,7 @@ function GestionPage() {
                   <div className="flex gap-1.5">
                     <button
                       onClick={async () => {
-                        await gestionActions.resolveValidation(v.id, "validee");
+                        await gestionActions.resolveValidation(v.id, "validee", resolvedBy);
                         toast.success(`${v.ref} validé.`);
                       }}
                       className="h-8 px-3 rounded-md bg-primary text-primary-foreground text-xs inline-flex items-center gap-1.5"
@@ -219,7 +222,7 @@ function GestionPage() {
                     </button>
                     <button
                       onClick={async () => {
-                        await gestionActions.resolveValidation(v.id, "rejetee");
+                        await gestionActions.resolveValidation(v.id, "rejetee", resolvedBy);
                         toast.error(`${v.ref} rejeté.`);
                       }}
                       className="h-8 px-3 rounded-md border border-border text-xs inline-flex items-center gap-1.5"
