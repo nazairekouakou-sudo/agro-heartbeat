@@ -8,6 +8,7 @@ import { usePaddy, type Appro } from "@/lib/paddyStore";
 import { useUsinage } from "@/lib/usinageStore";
 import { useCommercial } from "@/lib/commercialStore";
 import { useGestion } from "@/lib/gestionStore";
+import { useComptable } from "@/lib/comptableStore";
 
 export const Route = createFileRoute("/reporting")({
   head: () => ({
@@ -293,6 +294,7 @@ function RapportsParEntite({ from, to }: { from: string; to: string }) {
   const { appros } = usePaddy();
   const { sortiesRiz, validations } = useGestion();
   const { ventes } = useCommercial();
+  const { depenses, factures, encaissements } = useComptable();
   const chargeLines = useChargeLines(from, to);
 
   const partenaires = useMemo(
@@ -322,14 +324,16 @@ function RapportsParEntite({ from, to }: { from: string; to: string }) {
         {rapports.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
       </select>
 
-      {selected === "capi" && <RapportCapi from={from} to={to} chargeLines={chargeLines} ventes={ventes} />}
+      {selected === "capi" && (
+        <RapportCapi from={from} to={to} appros={appros} chargeLines={chargeLines} ventes={ventes} depenses={depenses} />
+      )}
       {selected === "prestataires" && (
-        <RapportPrestataires from={from} to={to} appros={appros} chargeLines={chargeLines} validationByKey={validationByKey} />
+        <RapportPrestataires from={from} to={to} factures={factures} encaissements={encaissements} />
       )}
       {selected !== "capi" && selected !== "prestataires" && (
         <RapportPartenaire
           entityName={selected} from={from} to={to} appros={appros} sortiesRiz={sortiesRiz}
-          chargeLines={chargeLines} validationByKey={validationByKey}
+          chargeLines={chargeLines} validationByKey={validationByKey} depenses={depenses}
         />
       )}
     </div>
@@ -337,13 +341,31 @@ function RapportsParEntite({ from, to }: { from: string; to: string }) {
 }
 
 function RapportCapi({
-  from, to, chargeLines, ventes,
-}: { from: string; to: string; chargeLines: ChargeLine[]; ventes: ReturnType<typeof useCommercial>["ventes"] }) {
+  from, to, appros, chargeLines, ventes, depenses,
+}: {
+  from: string; to: string; appros: Appro[]; chargeLines: ChargeLine[];
+  ventes: ReturnType<typeof useCommercial>["ventes"];
+  depenses: ReturnType<typeof useComptable>["depenses"];
+}) {
   const lignesCapi = chargeLines.filter((l) => l.entity === "CAPI" || l.entity === "Prestataire" || l.entity === null);
-  const depenses = lignesCapi.reduce((s, l) => s + l.montant, 0);
+  const approByLot = useMemo(() => new Map(appros.map((a) => [a.id, a])), [appros]);
+  const depensesCapi = depenses.filter((d) => {
+    if (!inRange(d.date, from, to)) return false;
+    if (!d.lotId) return true; // dépense générale, non rattachée à un partenaire
+    const a = approByLot.get(d.lotId);
+    return !a || a.entity === "CAPI" || a.entity === "Prestataire";
+  });
+  const depensesLibres = depensesCapi.reduce((s, d) => s + d.montant, 0);
+  const depensesOp = lignesCapi.reduce((s, l) => s + l.montant, 0);
+  const depensesTotal = depensesOp + depensesLibres;
   const recettes = ventes.filter((v) => inRange(v.date, from, to)).reduce((s, v) => s + v.montant, 0);
-  const marge = recettes - depenses;
+  const marge = recettes - depensesTotal;
   const margePct = recettes > 0 ? (marge / recettes) * 100 : 0;
+
+  const rows = [
+    ...lignesCapi.map((l) => [l.date, l.lotId, l.centre, l.libelle, fcfa(l.montant)]),
+    ...depensesCapi.map((d) => [d.date, d.lotId ?? "—", "Dépense libre", `${d.categorie} — ${d.libelle}`, fcfa(d.montant)]),
+  ].sort((x, y) => (String(x[0]) < String(y[0]) ? 1 : -1));
 
   return (
     <div>
@@ -354,36 +376,35 @@ function RapportCapi({
           title="Rapport Compte Propre (CAPI)"
           subtitle={`${from} → ${to}`}
           columns={["Date", "N° Lot", "Centre", "Libellé", "Montant"]}
-          rows={lignesCapi.map((l) => [l.date, l.lotId, l.centre, l.libelle, fcfa(l.montant)])}
+          rows={rows}
         />
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
         <StatCard label="Recettes" value={`${fcfaCompact(recettes)} F`} />
-        <StatCard label="Dépenses" value={`${fcfaCompact(depenses)} F`} tone="secondary" />
+        <StatCard label="Dépenses" value={`${fcfaCompact(depensesTotal)} F`} tone="secondary" />
         <StatCard label="Marge nette" value={`${margePct >= 0 ? "+" : ""}${margePct.toFixed(0)} %`} hint={`${fcfaCompact(marge)} F`} tone="gold" />
       </div>
-      <DataTable
-        columns={["Date", "N° Lot", "Centre", "Libellé", "Montant"]}
-        rows={lignesCapi.map((l) => [l.date, l.lotId, l.centre, l.libelle, fcfa(l.montant)])}
-      />
+      <DataTable columns={["Date", "N° Lot", "Centre", "Libellé", "Montant"]} rows={rows} />
     </div>
   );
 }
 
 function RapportPartenaire({
-  entityName, from, to, appros, sortiesRiz, chargeLines, validationByKey,
+  entityName, from, to, appros, sortiesRiz, chargeLines, validationByKey, depenses,
 }: {
   entityName: string; from: string; to: string; appros: Appro[];
   sortiesRiz: ReturnType<typeof useGestion>["sortiesRiz"];
   chargeLines: ChargeLine[];
   validationByKey: Map<string, ReturnType<typeof useGestion>["validations"][number]>;
+  depenses: ReturnType<typeof useComptable>["depenses"];
 }) {
   const mesLots = useMemo(() => appros.filter((a) => a.entityName === entityName), [appros, entityName]);
   const lotIds = useMemo(() => new Set(mesLots.map((a) => a.id)), [mesLots]);
 
   const volumePaddyKg = mesLots.filter((a) => inRange(a.dateAppro, from, to)).reduce((s, a) => s + a.poids, 0);
   const couts = chargeLines.filter((l) => l.entityName === entityName);
-  const totalCouts = couts.reduce((s, l) => s + l.montant, 0);
+  const depensesLibres = depenses.filter((d) => d.lotId && lotIds.has(d.lotId) && inRange(d.date, from, to));
+  const totalCouts = couts.reduce((s, l) => s + l.montant, 0) + depensesLibres.reduce((s, d) => s + d.montant, 0);
 
   const ventesRiz = sortiesRiz.filter((s) => lotIds.has(s.lotId) && inRange(s.date, from, to));
   const volumeRizVenduKg = ventesRiz.reduce((s, v) => s + v.quantite, 0);
@@ -399,6 +420,7 @@ function RapportPartenaire({
 
   const rows = [
     ...couts.map((l) => [l.date, l.lotId, `Débit — ${l.centre}`, l.libelle, `-${fcfa(l.montant)}`]),
+    ...depensesLibres.map((d) => [d.date, d.lotId ?? "—", "Débit — Dépense libre", `${d.categorie} — ${d.libelle}`, `-${fcfa(d.montant)}`]),
     ...ventesRiz.map((v) => [v.date, v.lotId, "Crédit — Vente riz", v.categorie, `+${fcfa(v.montant)}`]),
   ].sort((x, y) => (String(x[0]) < String(y[0]) ? 1 : -1));
 
@@ -430,24 +452,24 @@ function RapportPartenaire({
 }
 
 function RapportPrestataires({
-  from, to, appros, chargeLines, validationByKey,
+  from, to, factures, encaissements,
 }: {
-  from: string; to: string; appros: Appro[]; chargeLines: ChargeLine[];
-  validationByKey: Map<string, ReturnType<typeof useGestion>["validations"][number]>;
+  from: string; to: string;
+  factures: ReturnType<typeof useComptable>["factures"];
+  encaissements: ReturnType<typeof useComptable>["encaissements"];
 }) {
-  const lignes = chargeLines.filter((l) => l.entity === "Prestataire" && l.centre === "Approvisionnement");
-  const total = lignes.reduce((s, l) => s + l.montant, 0);
-  const enAttente = lignes
-    .filter((l) => {
-      const v = validationByKey.get(`${l.sourceTable}:${l.sourceId}`);
-      return !v || v.status !== "validee";
-    })
-    .reduce((s, l) => s + l.montant, 0);
+  const lignes = factures.filter((f) => inRange(f.date, from, to));
+  const encaisseParFacture = (id: string) => encaissements.filter((e) => e.factureId === id).reduce((s, e) => s + e.montant, 0);
 
-  const rows = lignes.map((l) => {
-    const v = validationByKey.get(`${l.sourceTable}:${l.sourceId}`);
-    const statut = v?.status === "validee" ? "Encaissé" : v?.status === "rejetee" ? "Rejeté" : "En attente";
-    return [l.date, l.entityName ?? "—", l.lotId, fcfa(l.montant), statut];
+  const totalFacture = lignes.reduce((s, f) => s + f.montantFacture, 0);
+  const totalEncaisse = lignes.reduce((s, f) => s + encaisseParFacture(f.id), 0);
+  const creances = totalFacture - totalEncaisse;
+
+  const rows = lignes.map((f) => {
+    const enc = encaisseParFacture(f.id);
+    const solde = f.montantFacture - enc;
+    const statut = solde <= 0 ? "Soldé" : enc > 0 ? "Partiel" : "Impayé";
+    return [f.date, f.tiers, f.typePrestation, f.lotId ?? "—", fcfa(f.montantFacture), fcfa(enc), statut];
   });
 
   return (
@@ -458,16 +480,16 @@ function RapportPrestataires({
           filename="rapport-prestataires"
           title="Rapport Prestataires / Tiers"
           subtitle={`${from} → ${to}`}
-          columns={["Date", "Prestataire", "N° Lot", "Montant facturé", "Statut"]}
+          columns={["Date", "Tiers", "Prestation", "N° Lot", "Montant facturé", "Encaissé", "Statut"]}
           rows={rows}
         />
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
-        <StatCard label="Total facturé" value={`${fcfaCompact(total)} F`} />
-        <StatCard label="En attente d'encaissement" value={`${fcfaCompact(enAttente)} F`} tone="secondary" />
-        <StatCard label="Prestations" value={String(lignes.length)} tone="gold" />
+        <StatCard label="Total facturé" value={`${fcfaCompact(totalFacture)} F`} />
+        <StatCard label="Encaissé" value={`${fcfaCompact(totalEncaisse)} F`} tone="secondary" />
+        <StatCard label="Créances (impayés)" value={`${fcfaCompact(creances)} F`} tone="gold" />
       </div>
-      <DataTable columns={["Date", "Prestataire", "N° Lot", "Montant facturé", "Statut"]} rows={rows} />
+      <DataTable columns={["Date", "Tiers", "Prestation", "N° Lot", "Montant facturé", "Encaissé", "Statut"]} rows={rows} />
     </div>
   );
 }
