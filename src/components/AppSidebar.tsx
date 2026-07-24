@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   LayoutDashboard,
   Sprout,
@@ -12,7 +13,9 @@ import {
   LogOut,
   UserCog,
   FileBarChart,
+  Menu,
 } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth, authActions, type AppRole } from "@/lib/authStore";
 
 type NavItem = {
@@ -57,77 +60,126 @@ const allNavGroups: { label: string; items: NavItem[] }[] = [
   },
 ];
 
-export function AppSidebar() {
+function useVisibleNavGroups() {
+  const { profile } = useAuth();
+  if (!profile) return [];
+  return allNavGroups
+    .map((g) => ({ ...g, items: g.items.filter((i) => i.roles.includes(profile.role)) }))
+    .filter((g) => g.items.length > 0);
+}
+
+function SidebarBrand() {
+  return (
+    <div className="px-6 py-6 flex items-center gap-3 border-b border-sidebar-border">
+      <div className="size-10 rounded-lg gradient-gold flex items-center justify-center shadow-lg">
+        <Wheat className="size-5 text-primary" />
+      </div>
+      <div>
+        <div className="font-display text-lg leading-none tracking-tight">CAPI</div>
+        <div className="text-[11px] uppercase tracking-widest text-sidebar-foreground/60 mt-1">
+          ERP · Riz
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
-  const { status, profile } = useAuth();
+  const navGroups = useVisibleNavGroups();
   const isActive = (to: string, exact?: boolean) =>
     exact ? currentPath === to : currentPath === to || currentPath.startsWith(`${to}/`);
 
-  if (status !== "signed-in" || !profile) return null;
+  return (
+    <nav className="flex-1 px-3 py-4 overflow-y-auto">
+      {navGroups.map((group) => (
+        <div key={group.label} className="mb-5">
+          <div className="px-3 mb-1.5 text-[10px] uppercase tracking-widest text-sidebar-foreground/50">
+            {group.label}
+          </div>
+          <div className="space-y-0.5">
+            {group.items.map((item) => {
+              const active = isActive(item.to, item.exact);
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to as "/"}
+                  onClick={onNavigate}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors ${
+                    active
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+                      : "hover:bg-sidebar-accent/50 text-sidebar-foreground/80"
+                  }`}
+                >
+                  <item.icon className="size-4 shrink-0" />
+                  <span className="truncate">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </nav>
+  );
+}
 
-  const navGroups = allNavGroups
-    .map((g) => ({ ...g, items: g.items.filter((i) => i.roles.includes(profile.role)) }))
-    .filter((g) => g.items.length > 0);
+function SidebarFooter({ fullName }: { fullName: string }) {
+  return (
+    <div className="p-4 border-t border-sidebar-border space-y-3">
+      <div className="rounded-lg bg-sidebar-accent/50 p-3">
+        <div className="flex items-center gap-2 text-xs">
+          <CircleDot className="size-3 text-gold" />
+          <span className="text-sidebar-foreground/80">Campagne 2024-2025</span>
+        </div>
+        <div className="mt-2 font-display text-xl text-sidebar-foreground">Actif</div>
+        <div className="mt-1 text-[11px] text-sidebar-foreground/60">{fullName}</div>
+      </div>
+      <button
+        onClick={() => authActions.signOut()}
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
+      >
+        <LogOut className="size-4" /> Déconnexion
+      </button>
+    </div>
+  );
+}
+
+export function AppSidebar() {
+  const { status, profile } = useAuth();
+  if (status !== "signed-in" || !profile) return null;
 
   return (
     <aside className="hidden lg:flex w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border shrink-0">
-      <div className="px-6 py-6 flex items-center gap-3 border-b border-sidebar-border">
-        <div className="size-10 rounded-lg gradient-gold flex items-center justify-center shadow-lg">
-          <Wheat className="size-5 text-primary" />
-        </div>
-        <div>
-          <div className="font-display text-lg leading-none tracking-tight">CAPI</div>
-          <div className="text-[11px] uppercase tracking-widest text-sidebar-foreground/60 mt-1">
-            ERP · Riz
-          </div>
-        </div>
-      </div>
-      <nav className="flex-1 px-3 py-4 overflow-y-auto">
-        {navGroups.map((group) => (
-          <div key={group.label} className="mb-5">
-            <div className="px-3 mb-1.5 text-[10px] uppercase tracking-widest text-sidebar-foreground/50">
-              {group.label}
-            </div>
-            <div className="space-y-0.5">
-              {group.items.map((item) => {
-                const active = isActive(item.to, item.exact);
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to as "/"}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors ${
-                      active
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
-                        : "hover:bg-sidebar-accent/50 text-sidebar-foreground/80"
-                    }`}
-                  >
-                    <item.icon className="size-4 shrink-0" />
-                    <span className="truncate">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </nav>
-      <div className="p-4 border-t border-sidebar-border space-y-3">
-        <div className="rounded-lg bg-sidebar-accent/50 p-3">
-          <div className="flex items-center gap-2 text-xs">
-            <CircleDot className="size-3 text-gold" />
-            <span className="text-sidebar-foreground/80">Campagne 2024-2025</span>
-          </div>
-          <div className="mt-2 font-display text-xl text-sidebar-foreground">Actif</div>
-          <div className="mt-1 text-[11px] text-sidebar-foreground/60">
-            {profile.fullName}
-          </div>
-        </div>
-        <button
-          onClick={() => authActions.signOut()}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
-        >
-          <LogOut className="size-4" /> Déconnexion
-        </button>
-      </div>
+      <SidebarBrand />
+      <SidebarNav />
+      <SidebarFooter fullName={profile.fullName} />
     </aside>
+  );
+}
+
+export function MobileSidebarTrigger() {
+  const { status, profile } = useAuth();
+  const [open, setOpen] = useState(false);
+  if (status !== "signed-in" || !profile) return null;
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <button
+          className="size-9 rounded-md hover:bg-muted flex items-center justify-center shrink-0 lg:hidden"
+          aria-label="Ouvrir le menu"
+        >
+          <Menu className="size-5" />
+        </button>
+      </SheetTrigger>
+      <SheetContent
+        side="left"
+        className="p-0 w-72 bg-sidebar text-sidebar-foreground border-sidebar-border flex flex-col"
+      >
+        <SidebarBrand />
+        <SidebarNav onNavigate={() => setOpen(false)} />
+        <SidebarFooter fullName={profile.fullName} />
+      </SheetContent>
+    </Sheet>
   );
 }

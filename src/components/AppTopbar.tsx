@@ -1,6 +1,7 @@
 import { Bell, Search, LogOut } from "lucide-react";
 import type { ReactNode } from "react";
 import { useAuth, authActions } from "@/lib/authStore";
+import { MobileSidebarTrigger } from "@/components/AppSidebar";
 
 const roleLabels: Record<string, string> = {
   admin: "Admin CAPI",
@@ -28,6 +29,7 @@ export function AppTopbar({
 
   return (
     <header className="h-16 border-b border-border bg-card/60 backdrop-blur px-6 flex items-center gap-4 shrink-0">
+      <MobileSidebarTrigger />
       <div className="min-w-0">
         <div className="text-[11px] uppercase tracking-widest text-muted-foreground">
           {eyebrow}
