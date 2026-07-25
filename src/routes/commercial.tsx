@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useUsinage, type Decorticage } from "@/lib/usinageStore";
 import { useGestion, gestionActions, type RizCategorie } from "@/lib/gestionStore";
 import { useCommercial, commercialActions, BOUTIQUES } from "@/lib/commercialStore";
+import { useTarifs, prixParCategorie } from "@/lib/tarifsStore";
 
 export const Route = createFileRoute("/commercial")({
   head: () => ({
@@ -202,14 +203,19 @@ function NewCommandeDialog({
   open: boolean; onClose: () => void; decorticages: Decorticage[]; existingCount: number;
 }) {
   const lotIds = useMemo(() => Array.from(new Set(decorticages.map((d) => d.lotId))), [decorticages]);
+  const tarifs = useTarifs();
   const [form, setForm] = useState({
     date: gestionActions.todayISO(),
     lotId: lotIds[0] ?? "",
     categorie: "Riz blanc" as RizCategorie,
     quantite: 0,
-    prixVente: 550,
+    prixVente: tarifs.prixRizBlanc,
     boutique: BOUTIQUES[0] as string,
   });
+
+  function setCategorie(categorie: RizCategorie) {
+    setForm((f) => ({ ...f, categorie, prixVente: prixParCategorie(tarifs, categorie) }));
+  }
 
   function submit() {
     if (!form.lotId || !form.quantite || !form.prixVente) {
@@ -244,7 +250,7 @@ function NewCommandeDialog({
             </Select>
           </Field>
           <Field label="Qualité">
-            <Select value={form.categorie} onValueChange={(v) => setForm({ ...form, categorie: v as RizCategorie })}>
+            <Select value={form.categorie} onValueChange={(v) => setCategorie(v as RizCategorie)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{rizCategories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
@@ -262,6 +268,7 @@ function NewCommandeDialog({
 }
 
 function NewVenteDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const tarifs = useTarifs();
   const [form, setForm] = useState({
     date: commercialActions.todayISO(),
     boutique: BOUTIQUES[0] as string,
@@ -269,7 +276,7 @@ function NewVenteDialog({ open, onClose }: { open: boolean; onClose: () => void 
     stockInitial: 0,
     entree: 0,
     sortie: 0,
-    prixVente: 550,
+    prixVente: tarifs.prixRizBlanc,
   });
 
   function submit() {

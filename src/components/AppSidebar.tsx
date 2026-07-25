@@ -13,6 +13,7 @@ import {
   LogOut,
   UserCog,
   FileBarChart,
+  Settings,
   Menu,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -56,7 +57,10 @@ const allNavGroups: { label: string; items: NavItem[] }[] = [
   },
   {
     label: "Administration",
-    items: [{ to: "/admin-utilisateurs", label: "Gestion des comptes", icon: UserCog, roles: ["admin"] }],
+    items: [
+      { to: "/admin-utilisateurs", label: "Gestion des comptes", icon: UserCog, roles: ["admin"] },
+      { to: "/admin-parametres", label: "Grille tarifaire", icon: Settings, roles: ["admin"] },
+    ],
   },
 ];
 

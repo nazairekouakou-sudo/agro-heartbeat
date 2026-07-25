@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminParametresRouteImport } from './routes/admin-parametres'
 import { Route as AdminSetupRouteImport } from './routes/admin-setup'
 import { Route as AdminUtilisateursRouteImport } from './routes/admin-utilisateurs'
 import { Route as CommercialRouteImport } from './routes/commercial'
@@ -24,6 +25,11 @@ import { Route as UsinageRouteImport } from './routes/usinage'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminParametresRoute = AdminParametresRouteImport.update({
+  id: '/admin-parametres',
+  path: '/admin-parametres',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminSetupRoute = AdminSetupRouteImport.update({
@@ -79,6 +85,7 @@ const UsinageRoute = UsinageRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin-parametres': typeof AdminParametresRoute
   '/admin-setup': typeof AdminSetupRoute
   '/admin-utilisateurs': typeof AdminUtilisateursRoute
   '/commercial': typeof CommercialRoute
@@ -92,6 +99,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin-parametres': typeof AdminParametresRoute
   '/admin-setup': typeof AdminSetupRoute
   '/admin-utilisateurs': typeof AdminUtilisateursRoute
   '/commercial': typeof CommercialRoute
@@ -106,6 +114,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin-parametres': typeof AdminParametresRoute
   '/admin-setup': typeof AdminSetupRoute
   '/admin-utilisateurs': typeof AdminUtilisateursRoute
   '/commercial': typeof CommercialRoute
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin-parametres'
     | '/admin-setup'
     | '/admin-utilisateurs'
     | '/commercial'
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin-parametres'
     | '/admin-setup'
     | '/admin-utilisateurs'
     | '/commercial'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin-parametres'
     | '/admin-setup'
     | '/admin-utilisateurs'
     | '/commercial'
@@ -161,6 +173,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminParametresRoute: typeof AdminParametresRoute
   AdminSetupRoute: typeof AdminSetupRoute
   AdminUtilisateursRoute: typeof AdminUtilisateursRoute
   CommercialRoute: typeof CommercialRoute
@@ -180,6 +193,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-parametres': {
+      id: '/admin-parametres'
+      path: '/admin-parametres'
+      fullPath: '/admin-parametres'
+      preLoaderRoute: typeof AdminParametresRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin-setup': {
@@ -257,6 +277,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminParametresRoute: AdminParametresRoute,
   AdminSetupRoute: AdminSetupRoute,
   AdminUtilisateursRoute: AdminUtilisateursRoute,
   CommercialRoute: CommercialRoute,

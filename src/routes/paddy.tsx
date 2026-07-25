@@ -1,6 +1,6 @@
 import { RequireRole } from "@/components/RequireRole";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { AppTopbar } from "@/components/AppTopbar";
 import { PageHeader, DataTable, StatCard } from "@/components/PageBits";
 import { Plus, Filter, Search, X, Timer } from "lucide-react";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { usePaddy, paddyActions, type Entity, type LotStatus } from "@/lib/paddyStore";
+import { useTarifs } from "@/lib/tarifsStore";
 
 export const Route = createFileRoute("/paddy")({
   head: () => ({
@@ -332,11 +333,17 @@ function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void 
 
 function NewSechageDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { appros } = usePaddy();
+  const tarifs = useTarifs();
   const [form, setForm] = useState({
     date: paddyActions.todayISO(), lotId: "",
     thInitial: 22, sacs: 0, poidsAvant: 0, jours: 3,
-    thApres: 14, poidsApres: 0, agent: "", puSechage: 50,
+    thApres: 14, poidsApres: 0, agent: "", puSechage: tarifs.puSechage,
   });
+
+  useEffect(() => {
+    if (open) setForm((f) => ({ ...f, puSechage: tarifs.puSechage }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   function pickLot(id: string) {
     const a = appros.find((x) => x.id === id);

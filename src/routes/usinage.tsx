@@ -1,6 +1,6 @@
 import { RequireRole } from "@/components/RequireRole";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { AppTopbar } from "@/components/AppTopbar";
 import { PageHeader, DataTable, StatCard } from "@/components/PageBits";
 import { Plus, Search, Filter } from "lucide-react";
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { usePaddy } from "@/lib/paddyStore";
+import { useTarifs } from "@/lib/tarifsStore";
 import {
   useUsinage, usinageActions, mkDecorticage, mkTrie,
   type Qualite, type Decorticage,
@@ -257,12 +258,18 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function NewDecorticageDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { appros } = usePaddy();
+  const tarifs = useTarifs();
   const [form, setForm] = useState({
     date: usinageActions.todayISO(), lotId: "",
     sacs: 0, poidsPaddy: 0, th: 13,
     lg1x: 0, casse2x: 0, fb: 0,
-    equipe: "Équipe A", puUsinage: 25,
+    equipe: "Équipe A", puUsinage: tarifs.puDecorticage,
   });
+
+  useEffect(() => {
+    if (open) setForm((f) => ({ ...f, puUsinage: tarifs.puDecorticage }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   function pickLot(id: string) {
     const a = appros.find((x) => x.id === id);
@@ -358,12 +365,18 @@ function NewDecorticageDialog({ open, onClose }: { open: boolean; onClose: () =>
 
 function NewTrieDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { decorticages } = useUsinage();
+  const tarifs = useTarifs();
   const [form, setForm] = useState({
     date: usinageActions.todayISO(),
     decorticageId: "", lotId: "",
     rizEntree: 0, rizApres: 0, residus: 0,
-    agent: "", puTriage: 10,
+    agent: "", puTriage: tarifs.puTriage,
   });
+
+  useEffect(() => {
+    if (open) setForm((f) => ({ ...f, puTriage: tarifs.puTriage }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   function pickDec(id: string) {
     const d = decorticages.find((x) => x.id === id);

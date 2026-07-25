@@ -33,7 +33,7 @@ const roleLabels: Record<AppRole, string> = {
   partenaire: "Partenaire",
 };
 
-type ProfileRow = { id: string; fullName: string; role: AppRole; entityName: string | null; pin: string | null; createdAt: string };
+type ProfileRow = { id: string; fullName: string; role: AppRole; entityName: string | null; pin: string | null; createdAt: string; active: boolean };
 
 function randomPin() {
   return String(Math.floor(100000 + Math.random() * 900000));
@@ -59,7 +59,8 @@ function AdminUtilisateursPage() {
     } else {
       setProfiles(
         (data ?? []).map((r) => ({
-          id: r.id, fullName: r.full_name, role: r.role, entityName: r.entity_name, pin: r.pin, createdAt: r.created_at,
+          id: r.id, fullName: r.full_name, role: r.role, entityName: r.entity_name, pin: r.pin,
+          createdAt: r.created_at, active: r.active ?? true,
         })),
       );
     }
@@ -93,12 +94,18 @@ function AdminUtilisateursPage() {
           <p className="text-sm text-muted-foreground">Chargement…</p>
         ) : (
           <DataTable
-            columns={["Nom", "Rôle", "PIN / Entité", "Créé le"]}
+            columns={["Nom", "Rôle", "PIN / Entité", "Statut", "Créé le", ""]}
             rows={profiles.map((p) => [
               p.fullName,
-              roleLabels[p.role] ?? p.role,
+              <RoleSelect key={`role-${p.id}`} profile={p} onChanged={loadProfiles} />,
               p.role === "partenaire" ? (p.entityName ?? "—") : (p.pin ?? "—"),
+              p.active ? (
+                <span key={`s-${p.id}`} className="inline-flex px-2 py-0.5 rounded-full text-[11px] bg-success/15 text-success">Actif</span>
+              ) : (
+                <span key={`s-${p.id}`} className="inline-flex px-2 py-0.5 rounded-full text-[11px] bg-destructive/15 text-destructive">Désactivé</span>
+              ),
               new Date(p.createdAt).toLocaleDateString("fr-FR"),
+              <ToggleActiveButton key={`t-${p.id}`} profile={p} onChanged={loadProfiles} />,
             ])}
           />
         )}
@@ -121,6 +128,46 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <Label className="text-xs text-muted-foreground">{label}</Label>
       {children}
     </div>
+  );
+}
+
+const allRoles: AppRole[] = ["admin", "paddy", "usinage", "gestion", "commercial", "comptable", "partenaire"];
+
+function RoleSelect({ profile, onChanged }: { profile: ProfileRow; onChanged: () => void }) {
+  async function changeRole(newRole: string) {
+    if (newRole === profile.role) return;
+    const { error } = await supabase.from("profiles").update({ role: newRole }).eq("id", profile.id);
+    if (error) {
+      toast.error("Erreur : " + error.message);
+    } else {
+      toast.success(`Rôle de ${profile.fullName} changé en ${roleLabels[newRole as AppRole]}.`);
+      onChanged();
+    }
+  }
+  return (
+    <Select value={profile.role} onValueChange={changeRole}>
+      <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>
+      <SelectContent>
+        {allRoles.map((r) => <SelectItem key={r} value={r}>{roleLabels[r]}</SelectItem>)}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function ToggleActiveButton({ profile, onChanged }: { profile: ProfileRow; onChanged: () => void }) {
+  async function toggle() {
+    const { error } = await supabase.from("profiles").update({ active: !profile.active }).eq("id", profile.id);
+    if (error) {
+      toast.error("Erreur : " + error.message);
+    } else {
+      toast.success(profile.active ? `${profile.fullName} désactivé.` : `${profile.fullName} réactivé.`);
+      onChanged();
+    }
+  }
+  return (
+    <button onClick={toggle} className="h-7 px-2.5 rounded-md border border-border text-xs whitespace-nowrap">
+      {profile.active ? "Désactiver" : "Réactiver"}
+    </button>
   );
 }
 

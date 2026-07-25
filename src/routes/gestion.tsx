@@ -14,6 +14,7 @@ import { usePaddy, type Appro, type LotStatus } from "@/lib/paddyStore";
 import { useUsinage, type Decorticage } from "@/lib/usinageStore";
 import { useGestion, gestionActions, type RizCategorie } from "@/lib/gestionStore";
 import { useAuth } from "@/lib/authStore";
+import { useTarifs, prixParCategorie } from "@/lib/tarifsStore";
 
 export const Route = createFileRoute("/gestion")({
   head: () => ({
@@ -266,14 +267,19 @@ function NewSortieRizDialog({
   decorticages: Decorticage[];
 }) {
   const lotIds = useMemo(() => Array.from(new Set(decorticages.map((d) => d.lotId))), [decorticages]);
+  const tarifs = useTarifs();
   const [form, setForm] = useState({
     date: gestionActions.todayISO(),
     commandeId: "",
     lotId: lotIds[0] ?? "",
     categorie: "Riz blanc" as RizCategorie,
     quantite: 0,
-    prixVente: 550,
+    prixVente: tarifs.prixRizBlanc,
   });
+
+  function setCategorie(categorie: RizCategorie) {
+    setForm((f) => ({ ...f, categorie, prixVente: prixParCategorie(tarifs, categorie) }));
+  }
 
   function submit() {
     if (!form.lotId || !form.quantite || !form.prixVente) {
@@ -318,7 +324,7 @@ function NewSortieRizDialog({
             </Select>
           </Field>
           <Field label="Qualité">
-            <Select value={form.categorie} onValueChange={(v) => setForm({ ...form, categorie: v as RizCategorie })}>
+            <Select value={form.categorie} onValueChange={(v) => setCategorie(v as RizCategorie)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {rizCategories.map((c) => (
