@@ -117,9 +117,19 @@ function Dashboard() {
     [sortiesRiz, approByLot],
   );
 
-  const caMois = useMemo(() => ventes.filter((v) => thisMonth(v.date)).reduce((s, v) => s + v.montant, 0), [ventes]);
+  const caMois = useMemo(
+    () =>
+      ventes.filter((v) => thisMonth(v.date)).reduce((s, v) => s + v.montant, 0) +
+      factures.filter((f) => thisMonth(f.date)).reduce((s, f) => s + f.montantFacture, 0),
+    [ventes, factures],
+  );
   const { from: prevFrom, to: prevTo } = lastMonthRange();
-  const caMoisPrec = useMemo(() => ventes.filter((v) => inRange(v.date, prevFrom, prevTo)).reduce((s, v) => s + v.montant, 0), [ventes, prevFrom, prevTo]);
+  const caMoisPrec = useMemo(
+    () =>
+      ventes.filter((v) => inRange(v.date, prevFrom, prevTo)).reduce((s, v) => s + v.montant, 0) +
+      factures.filter((f) => inRange(f.date, prevFrom, prevTo)).reduce((s, f) => s + f.montantFacture, 0),
+    [ventes, factures, prevFrom, prevTo],
+  );
   const caDelta = pctDelta(caMois, caMoisPrec);
 
   // ---------- Flux paddy 7 jours par modèle ----------

@@ -110,7 +110,12 @@ function ComptablePage() {
   );
 
   const depensesCumulees = useMemo(() => chargeLines.filter((l) => thisMonth(l.date)).reduce((s, l) => s + l.montant, 0) + depenses.filter((d) => thisMonth(d.date)).reduce((s, d) => s + d.montant, 0), [chargeLines, depenses]);
-  const recettesCumulees = useMemo(() => ventes.filter((v) => thisMonth(v.date)).reduce((s, v) => s + v.montant, 0), [ventes]);
+  const recettesCumulees = useMemo(
+    () =>
+      ventes.filter((v) => thisMonth(v.date)).reduce((s, v) => s + v.montant, 0) +
+      factures.filter((f) => thisMonth(f.date)).reduce((s, f) => s + f.montantFacture, 0),
+    [ventes, factures],
+  );
   const decaissementsAVenir = useMemo(() => filteredLines.filter((l) => { const v = validationByKey.get(`${l.sourceTable}:${l.sourceId}`); return !v || v.status !== "validee" || !v.paid; }).length, [filteredLines, validationByKey]);
   const rentabilite = recettesCumulees > 0 ? ((recettesCumulees - depensesCumulees) / recettesCumulees) * 100 : 0;
 

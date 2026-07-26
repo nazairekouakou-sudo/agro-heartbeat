@@ -325,7 +325,7 @@ function RapportsParEntite({ from, to }: { from: string; to: string }) {
       </select>
 
       {selected === "capi" && (
-        <RapportCapi from={from} to={to} appros={appros} chargeLines={chargeLines} ventes={ventes} depenses={depenses} />
+        <RapportCapi from={from} to={to} appros={appros} chargeLines={chargeLines} ventes={ventes} depenses={depenses} factures={factures} />
       )}
       {selected === "prestataires" && (
         <RapportPrestataires from={from} to={to} factures={factures} encaissements={encaissements} />
@@ -341,11 +341,12 @@ function RapportsParEntite({ from, to }: { from: string; to: string }) {
 }
 
 function RapportCapi({
-  from, to, appros, chargeLines, ventes, depenses,
+  from, to, appros, chargeLines, ventes, depenses, factures,
 }: {
   from: string; to: string; appros: Appro[]; chargeLines: ChargeLine[];
   ventes: ReturnType<typeof useCommercial>["ventes"];
   depenses: ReturnType<typeof useComptable>["depenses"];
+  factures: ReturnType<typeof useComptable>["factures"];
 }) {
   const lignesCapi = chargeLines.filter((l) => l.entity === "CAPI" || l.entity === "Prestataire" || l.entity === null);
   const approByLot = useMemo(() => new Map(appros.map((a) => [a.id, a])), [appros]);
@@ -358,13 +359,17 @@ function RapportCapi({
   const depensesLibres = depensesCapi.reduce((s, d) => s + d.montant, 0);
   const depensesOp = lignesCapi.reduce((s, l) => s + l.montant, 0);
   const depensesTotal = depensesOp + depensesLibres;
-  const recettes = ventes.filter((v) => inRange(v.date, from, to)).reduce((s, v) => s + v.montant, 0);
+  const recettesVentes = ventes.filter((v) => inRange(v.date, from, to)).reduce((s, v) => s + v.montant, 0);
+  const facturesCapi = factures.filter((f) => inRange(f.date, from, to));
+  const recettesPrestations = facturesCapi.reduce((s, f) => s + f.montantFacture, 0);
+  const recettes = recettesVentes + recettesPrestations;
   const marge = recettes - depensesTotal;
   const margePct = recettes > 0 ? (marge / recettes) * 100 : 0;
 
   const rows = [
     ...lignesCapi.map((l) => [l.date, l.lotId, l.centre, l.libelle, fcfa(l.montant)]),
     ...depensesCapi.map((d) => [d.date, d.lotId ?? "—", "Dépense libre", `${d.categorie} — ${d.libelle}`, fcfa(d.montant)]),
+    ...facturesCapi.map((f) => [f.date, f.lotId ?? "—", "Recette — Prestation", `${f.typePrestation} · ${f.tiers}`, `+${fcfa(f.montantFacture)}`]),
   ].sort((x, y) => (String(x[0]) < String(y[0]) ? 1 : -1));
 
   return (
