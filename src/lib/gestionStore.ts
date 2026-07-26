@@ -1,7 +1,8 @@
-// Store Service Gestion — sorties riz blanchi + file de validations.
-// Persisté sur Supabase, synchronisé en temps réel.
+// Store Service Gestion — sorties riz blanchi, réceptions riz externe,
+// file de validations. Persisté sur Supabase, synchronisé en temps réel.
 import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "./supabaseClient";
+import type { Entity } from "./paddyStore";
 
 export type RizCategorie = "Riz blanc" | "2X Cassé" | "Fine Brisure";
 
@@ -15,6 +16,20 @@ export type SortieRiz = {
   prixVente: number;
   montant: number;
   boutique: string | null;
+};
+
+export type ReceptionRizExterneStatut = "recu" | "en_triage" | "trie";
+
+// Riz blanc déjà décortiqué, envoyé par un partenaire/prestataire
+// directement pour triage (sans passer par Paddy → Décorticage CAPI).
+// A son propre numéro de lot, distinct des lots paddy (appros).
+export type ReceptionRizExterne = {
+  id: string; // numéro de lot dédié, ex: REXT-001
+  date: string;
+  entityType: Entity;
+  entityName: string;
+  poids: number;
+  statut: ReceptionRizExterneStatut;
 };
 
 export type ValidationStatus = "en_attente" | "validee" | "rejetee";
@@ -35,10 +50,15 @@ export type Validation = {
   paidBy: string | null;
 };
 
-type State = { sortiesRiz: SortieRiz[]; validations: Validation[]; loaded: boolean };
+type State = {
+  sortiesRiz: SortieRiz[];
+  receptionsExternes: ReceptionRizExterne[];
+  validations: Validation[];
+  loaded: boolean;
+};
 
 const listeners = new Set<() => void>();
-let state: State = { sortiesRiz: [], validations: [], loaded: false };
+let state: State = { sortiesRiz: [], receptionsExternes: [], validations: [], loaded: false };
 
 function emit() {
   listeners.forEach((l) => l());
@@ -70,6 +90,14 @@ function sortieRizFromRow(r: any): SortieRiz {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function receptionFromRow(r: any): ReceptionRizExterne {
+  return {
+    id: r.id, date: r.date, entityType: r.entity_type, entityName: r.entity_name,
+    poids: Number(r.poids), statut: r.statut,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function validationFromRow(r: any): Validation {
   return {
     id: r.id, ref: r.ref, service: r.service, montant: r.montant, status: r.status,
@@ -84,14 +112,17 @@ function validationFromRow(r: any): Validation {
 let initPromise: Promise<void> | null = null;
 
 async function refetchAll() {
-  const [sortiesRes, validationsRes] = await Promise.all([
+  const [sortiesRes, receptionsRes, validationsRes] = await Promise.all([
     supabase.from("sorties_riz").select("*").order("created_at", { ascending: false }),
+    supabase.from("receptions_riz_externe").select("*").order("created_at", { ascending: false }),
     supabase.from("validations").select("*").order("created_at", { ascending: false }),
   ]);
   if (sortiesRes.error) console.error("[gestionStore] sorties_riz:", sortiesRes.error.message);
+  if (receptionsRes.error) console.error("[gestionStore] receptions_riz_externe:", receptionsRes.error.message);
   if (validationsRes.error) console.error("[gestionStore] validations:", validationsRes.error.message);
   state = {
     sortiesRiz: (sortiesRes.data ?? []).map(sortieRizFromRow),
+    receptionsExternes: (receptionsRes.data ?? []).map(receptionFromRow),
     validations: (validationsRes.data ?? []).map(validationFromRow),
     loaded: true,
   };
@@ -110,6 +141,7 @@ function ensureRealtime() {
   supabase
     .channel("gestion-changes")
     .on("postgres_changes", { event: "*", schema: "public", table: "sorties_riz" }, () => refetchAll())
+    .on("postgres_changes", { event: "*", schema: "public", table: "receptions_riz_externe" }, () => refetchAll())
     .on("postgres_changes", { event: "*", schema: "public", table: "validations" }, () => refetchAll())
     .subscribe();
 }
@@ -152,8 +184,44 @@ export const gestionActions = {
     return id;
   },
 
+  addReceptionExterne(input: Omit<ReceptionRizExterne, "id" | "statut">) {
+    const id = nextId("REXT", state.receptionsExternes);
+    const optimistic: ReceptionRizExterne = { ...input, id, statut: "recu" };
+    state = { ...state, receptionsExternes: [optimistic, ...state.receptionsExternes] };
+    emit();
+
+    supabase
+      .from("receptions_riz_externe")
+      .insert({
+        id, date: input.date, entity_type: input.entityType, entity_name: input.entityName, poids: input.poids,
+      })
+      .then(({ error }) => {
+        if (error) {
+          console.error("[gestionStore] addReceptionExterne:", error.message);
+          state = { ...state, receptionsExternes: state.receptionsExternes.filter((r) => r.id !== id) };
+          emit();
+        } else {
+          refetchAll();
+        }
+      });
+
+    return id;
+  },
+
+  async updateReceptionStatut(id: string, statut: ReceptionRizExterneStatut) {
+    state = {
+      ...state,
+      receptionsExternes: state.receptionsExternes.map((r) => (r.id === id ? { ...r, statut } : r)),
+    };
+    emit();
+    const { error } = await supabase.from("receptions_riz_externe").update({ statut }).eq("id", id);
+    if (error) {
+      console.error("[gestionStore] updateReceptionStatut:", error.message);
+      refetchAll();
+    }
+  },
+
   async resolveValidation(id: string, status: "validee" | "rejetee", resolvedBy = "Admin CAPI") {
-    // Optimistic
     state = {
       ...state,
       validations: state.validations.map((v) =>

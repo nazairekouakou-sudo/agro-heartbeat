@@ -17,6 +17,7 @@ export type Appro = {
   zone: string;
   entity: Entity;
   entityName: string;
+  fournisseur: string | null;
   variete: string;
   th: number;
   ti: number;
@@ -113,7 +114,7 @@ function nextLotId(existing: Appro[]): string {
 function approFromRow(r: any): Appro {
   return {
     id: r.id, dateAppro: r.date_appro, dateEntree: r.date_entree, zone: r.zone,
-    entity: r.entity, entityName: r.entity_name, variete: r.variete,
+    entity: r.entity, entityName: r.entity_name, fournisseur: r.fournisseur ?? null, variete: r.variete,
     th: Number(r.th), ti: Number(r.ti), sacs: r.sacs, poids: Number(r.poids),
     pm: Number(r.pm), agent: r.agent, pu: Number(r.pu), cap: Number(r.cap),
     charge: Number(r.charge), pesage: Number(r.pesage), dechargement: Number(r.dechargement),
@@ -219,7 +220,7 @@ export const paddyActions = {
       .from("appros")
       .insert({
         id, date_appro: input.dateAppro, date_entree: input.dateEntree, zone: input.zone,
-        entity: input.entity, entity_name: input.entityName, variete: input.variete,
+        entity: input.entity, entity_name: input.entityName, fournisseur: input.fournisseur, variete: input.variete,
         th: input.th, ti: input.ti, sacs: input.sacs, poids: input.poids, agent: input.agent,
         pu: input.pu, charge: input.charge, pesage: input.pesage,
         dechargement: input.dechargement, transport: input.transport,

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useUsinage, type Decorticage } from "@/lib/usinageStore";
+import { usePaddy } from "@/lib/paddyStore";
 import { useGestion, gestionActions, type RizCategorie } from "@/lib/gestionStore";
 import { useCommercial, commercialActions, BOUTIQUES } from "@/lib/commercialStore";
 import { useTarifs, prixParCategorie } from "@/lib/tarifsStore";
@@ -204,6 +205,8 @@ function NewCommandeDialog({
 }) {
   const lotIds = useMemo(() => Array.from(new Set(decorticages.map((d) => d.lotId))), [decorticages]);
   const tarifs = useTarifs();
+  const { appros, sechages, sorties } = usePaddy();
+  const { calibrages, tries } = useUsinage();
   const [form, setForm] = useState({
     date: gestionActions.todayISO(),
     lotId: lotIds[0] ?? "",
@@ -216,6 +219,25 @@ function NewCommandeDialog({
   function setCategorie(categorie: RizCategorie) {
     setForm((f) => ({ ...f, categorie, prixVente: prixParCategorie(tarifs, categorie) }));
   }
+
+  // Prix de revient du lot = total des charges du lot ÷ riz blanchi produit
+  const prixRevient = useMemo(() => {
+    if (!form.lotId) return 0;
+    const appro = appros.find((a) => a.id === form.lotId);
+    const chargesAppro = appro?.chargeTotale ?? 0;
+    const chargesSechage = sechages.filter((s) => s.lotId === form.lotId).reduce((s, x) => s + x.montant, 0);
+    const chargesSortie = sorties.filter((s) => s.lotId === form.lotId).reduce((s, x) => s + x.chargeTotale, 0);
+    const decLot = decorticages.filter((d) => d.lotId === form.lotId);
+    const chargesUsinage = decLot.reduce((s, d) => s + d.coutUsinage, 0);
+    const chargesCalibrage = calibrages.filter((c) => c.lotId === form.lotId).reduce((s, c) => s + c.coutCalibrage, 0);
+    const chargesTriage = tries.filter((t) => t.lotId === form.lotId).reduce((s, t) => s + t.coutTriage, 0);
+    const rizProduit = decLot.reduce((s, d) => s + d.rizBlanchi, 0);
+    const totalCharges = chargesAppro + chargesSechage + chargesSortie + chargesUsinage + chargesCalibrage + chargesTriage;
+    return rizProduit > 0 ? totalCharges / rizProduit : 0;
+  }, [form.lotId, appros, sechages, sorties, decorticages, calibrages, tries]);
+
+  const margeParKg = form.prixVente - prixRevient;
+  const margePct = prixRevient > 0 ? (margeParKg / prixRevient) * 100 : 0;
 
   function submit() {
     if (!form.lotId || !form.quantite || !form.prixVente) {
@@ -257,6 +279,23 @@ function NewCommandeDialog({
           </Field>
           <Field label="Quantité (kg)"><Input type="number" value={form.quantite || ""} onChange={(e) => setForm({ ...form, quantite: Number(e.target.value) })} /></Field>
           <Field label="Prix de vente (FCFA/kg)"><Input type="number" value={form.prixVente || ""} onChange={(e) => setForm({ ...form, prixVente: Number(e.target.value) })} /></Field>
+        </div>
+
+        <div className="mt-1 grid grid-cols-3 gap-3 rounded-md bg-muted/40 p-3 text-sm">
+          <div>
+            <div className="text-xs text-muted-foreground">Prix d'achat (revient)</div>
+            <strong>{prixRevient > 0 ? `${Math.round(prixRevient).toLocaleString("fr-FR")} F/kg` : "—"}</strong>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">Prix de vente</div>
+            <strong>{form.prixVente.toLocaleString("fr-FR")} F/kg</strong>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">Marge</div>
+            <strong className={margeParKg >= 0 ? "text-success" : "text-destructive"}>
+              {prixRevient > 0 ? `${margeParKg >= 0 ? "+" : ""}${Math.round(margeParKg).toLocaleString("fr-FR")} F/kg (${margePct.toFixed(0)}%)` : "—"}
+            </strong>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Annuler</Button>

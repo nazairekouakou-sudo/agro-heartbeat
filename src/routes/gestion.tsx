@@ -32,6 +32,7 @@ export const Route = createFileRoute("/gestion")({
 const tabs = [
   { id: "stock-paddy", label: "Stock paddy" },
   { id: "entree-riz", label: "Entrée riz blanchi" },
+  { id: "reception-externe", label: "Réception riz externe" },
   { id: "sortie-riz", label: "Sortie riz blanchi" },
   { id: "validation", label: "Validations en attente" },
 ] as const;
@@ -59,12 +60,13 @@ function statusTone(status: LotStatus): "ok" | "warn" | "muted" {
 function GestionPage() {
   const [tab, setTab] = useState<TabId>("stock-paddy");
   const [openSortie, setOpenSortie] = useState(false);
+  const [openReception, setOpenReception] = useState(false);
   const { profile } = useAuth();
   const resolvedBy = profile?.fullName ?? "Gestion CAPI";
 
   const { appros, sechages, sorties } = usePaddy();
   const { decorticages, tries } = useUsinage();
-  const { sortiesRiz, validations } = useGestion();
+  const { sortiesRiz, receptionsExternes, validations } = useGestion();
 
   // ---------- Stock paddy : dérivé des données Paddy ----------
   const stockPaddyTonnes = useMemo(
@@ -165,6 +167,33 @@ function GestionPage() {
           />
         )}
 
+        {tab === "reception-externe" && (
+          <div className="space-y-3">
+            <div className="flex justify-end">
+              <Button size="sm" onClick={() => setOpenReception(true)} className="gap-1.5">
+                <Plus className="size-4" /> Nouvelle réception
+              </Button>
+            </div>
+            {receptionsExternes.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                Aucun riz blanc externe reçu pour l'instant. Utilisé quand un partenaire ou prestataire envoie
+                du riz déjà décortiqué directement pour trie optique, sans passer par le Service Paddy.
+              </p>
+            )}
+            <DataTable
+              columns={["N° Lot", "Date", "Origine", "Entité", "Poids (kg)", "Statut"]}
+              rows={receptionsExternes.map((r) => [
+                r.id, fmtDate(r.date), r.entityType, r.entityName, kg(r.poids),
+                <StatusPill
+                  key={r.id}
+                  k={r.statut === "trie" ? "Trié" : r.statut === "en_triage" ? "En triage" : "Reçu"}
+                  tone={r.statut === "trie" ? "ok" : r.statut === "en_triage" ? "warn" : "muted"}
+                />,
+              ])}
+            />
+          </div>
+        )}
+
         {tab === "sortie-riz" && (
           <div className="space-y-3">
             <div className="flex justify-end">
@@ -241,6 +270,7 @@ function GestionPage() {
       </div>
 
       <NewSortieRizDialog open={openSortie} onClose={() => setOpenSortie(false)} decorticages={decorticages} />
+      <NewReceptionExterneDialog open={openReception} onClose={() => setOpenReception(false)} />
     </>
     </RequireRole>
   );
@@ -341,6 +371,66 @@ function NewSortieRizDialog({
           </Field>
         </div>
 
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Annuler</Button>
+          <Button onClick={submit}>Enregistrer</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function NewReceptionExterneDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [form, setForm] = useState({
+    date: gestionActions.todayISO(),
+    entityType: "Partenaire" as Appro["entity"],
+    entityName: "",
+    poids: 0,
+  });
+
+  function submit() {
+    if (!form.entityName.trim() || !form.poids) {
+      toast.error("Entité et poids sont obligatoires.");
+      return;
+    }
+    const id = gestionActions.addReceptionExterne({
+      date: form.date, entityType: form.entityType, entityName: form.entityName.trim(), poids: form.poids,
+    });
+    toast.success(`Réception ${id} enregistrée. Ce lot est disponible pour le trie optique dans Usinage.`);
+    onClose();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="font-display">Nouvelle réception riz blanc externe</DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground -mt-2">
+          Riz déjà décortiqué, envoyé par un partenaire ou prestataire directement pour trie optique.
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Date">
+            <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+          </Field>
+          <Field label="Type d'origine">
+            <Select value={form.entityType} onValueChange={(v) => setForm({ ...form, entityType: v as Appro["entity"] })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Partenaire">Partenaire</SelectItem>
+                <SelectItem value="Prestataire">Prestataire</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <div className="col-span-2">
+            <Field label="Nom de l'entité">
+              <Input value={form.entityName} onChange={(e) => setForm({ ...form, entityName: e.target.value })} placeholder="Ex: Partenaire NORD" />
+            </Field>
+          </div>
+          <Field label="Poids reçu (kg)">
+            <Input type="number" value={form.poids || ""} onChange={(e) => setForm({ ...form, poids: Number(e.target.value) })} />
+          </Field>
+        </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Annuler</Button>
           <Button onClick={submit}>Enregistrer</Button>

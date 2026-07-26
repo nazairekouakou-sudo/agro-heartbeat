@@ -1,5 +1,7 @@
 // Store Grille Tarifaire — prix officiels du riz + tarifs de prestations.
 // Ligne unique, éditable par l'Admin, lue par tous les rôles connectés.
+// Double tarification Usinage : coût de charge (interne CAPI) vs
+// coût de facturation (facturé au partenaire/prestataire propriétaire du lot).
 import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "./supabaseClient";
 
@@ -7,8 +9,12 @@ export type Tarifs = {
   prixRizBlanc: number;
   prix2xCasse: number;
   prixFineBrisure: number;
-  puDecorticage: number;
-  puTriage: number;
+  puDecorticageCharge: number;   // coût interne CAPI (FCFA/kg riz blanc)
+  puDecorticageFactureA: number; // tranche A facturée au tiers (FCFA/kg riz blanc)
+  puDecorticageFactureB: number; // tranche B facturée au tiers (FCFA/kg paddy)
+  puCalibrageCharge: number;     // coût interne CAPI (FCFA/kg riz blanc)
+  puTriageCharge: number;        // coût interne CAPI (FCFA/kg riz blanc non trié)
+  puTriageFacture: number;       // facturé au tiers (FCFA/kg riz blanc non trié)
   puSechage: number;
   updatedAt: string | null;
   updatedBy: string | null;
@@ -16,7 +22,10 @@ export type Tarifs = {
 
 const DEFAULT_TARIFS: Tarifs = {
   prixRizBlanc: 550, prix2xCasse: 450, prixFineBrisure: 350,
-  puDecorticage: 25, puTriage: 10, puSechage: 50,
+  puDecorticageCharge: 5, puDecorticageFactureA: 40, puDecorticageFactureB: 50,
+  puCalibrageCharge: 3,
+  puTriageCharge: 3, puTriageFacture: 15,
+  puSechage: 50,
   updatedAt: null, updatedBy: null,
 };
 
@@ -40,7 +49,10 @@ function getSnapshot() {
 function tarifsFromRow(r: any): Tarifs {
   return {
     prixRizBlanc: Number(r.prix_riz_blanc), prix2xCasse: Number(r.prix_2x_casse), prixFineBrisure: Number(r.prix_fine_brisure),
-    puDecorticage: Number(r.pu_decorticage), puTriage: Number(r.pu_triage), puSechage: Number(r.pu_sechage),
+    puDecorticageCharge: Number(r.pu_decorticage_charge), puDecorticageFactureA: Number(r.pu_decorticage_facture_a),
+    puDecorticageFactureB: Number(r.pu_decorticage_facture_b), puCalibrageCharge: Number(r.pu_calibrage_charge),
+    puTriageCharge: Number(r.pu_triage_charge), puTriageFacture: Number(r.pu_triage_facture),
+    puSechage: Number(r.pu_sechage),
     updatedAt: r.updated_at, updatedBy: r.updated_by,
   };
 }
@@ -95,8 +107,12 @@ export const tarifsActions = {
         ...(patch.prixRizBlanc !== undefined && { prix_riz_blanc: patch.prixRizBlanc }),
         ...(patch.prix2xCasse !== undefined && { prix_2x_casse: patch.prix2xCasse }),
         ...(patch.prixFineBrisure !== undefined && { prix_fine_brisure: patch.prixFineBrisure }),
-        ...(patch.puDecorticage !== undefined && { pu_decorticage: patch.puDecorticage }),
-        ...(patch.puTriage !== undefined && { pu_triage: patch.puTriage }),
+        ...(patch.puDecorticageCharge !== undefined && { pu_decorticage_charge: patch.puDecorticageCharge }),
+        ...(patch.puDecorticageFactureA !== undefined && { pu_decorticage_facture_a: patch.puDecorticageFactureA }),
+        ...(patch.puDecorticageFactureB !== undefined && { pu_decorticage_facture_b: patch.puDecorticageFactureB }),
+        ...(patch.puCalibrageCharge !== undefined && { pu_calibrage_charge: patch.puCalibrageCharge }),
+        ...(patch.puTriageCharge !== undefined && { pu_triage_charge: patch.puTriageCharge }),
+        ...(patch.puTriageFacture !== undefined && { pu_triage_facture: patch.puTriageFacture }),
         ...(patch.puSechage !== undefined && { pu_sechage: patch.puSechage }),
         updated_at: new Date().toISOString(),
         updated_by: updatedBy,

@@ -102,12 +102,13 @@ function PaddyPage() {
 
         {tab === "appro" && (
           <DataTable
-            columns={["N° Lot", "Date entrée", "Zone", "Entité", "Variété", "TH", "TI", "Sacs", "Poids (kg)", "PM", "Statut", "Agent"]}
+            columns={["N° Lot", "Date entrée", "Zone", "Entité", "Fournisseur", "Variété", "TH", "TI", "Sacs", "Poids (kg)", "PM", "Statut", "Agent"]}
             rows={filteredAppros.map((a) => [
               <button className="text-primary hover:underline font-medium" onClick={() => setDetailLot(a.id)}>{a.id}</button>,
               fmtDate(a.dateEntree),
               a.zone,
               <EntityBadge k={a.entity} name={a.entityName} />,
+              a.fournisseur ?? "—",
               a.variete,
               `${a.th}%`,
               `${a.ti}%`,
@@ -235,7 +236,7 @@ function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void 
   const [form, setForm] = useState({
     dateEntree: paddyActions.todayISO(),
     zone: "", entity: "CAPI" as Entity, entityName: "CAPI", variete: "JT 11",
-    th: 22, ti: 3, sacs: 0, poids: 0, agent: "",
+    th: 22, ti: 3, sacs: 0, poids: 0, agent: "", fournisseur: "",
     pu: 300, charge: 0, pesage: 0, dechargement: 0,
     transport: 0, fraisAnnexes: 0, prime: 0,
   });
@@ -248,6 +249,9 @@ function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void 
     if (!form.zone || !form.agent || !form.sacs || !form.poids) {
       toast.error("Zone, agent, sacs et poids sont obligatoires."); return;
     }
+    if (form.entity === "CAPI" && !form.fournisseur.trim()) {
+      toast.error("Le nom du fournisseur est obligatoire pour un lot CAPI."); return;
+    }
     const id = paddyActions.addAppro({
       dateAppro: form.dateEntree, dateEntree: form.dateEntree,
       zone: form.zone, entity: form.entity, entityName: form.entityName || form.entity,
@@ -256,6 +260,7 @@ function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void 
       pu: form.pu, charge: form.charge, pesage: form.pesage,
       dechargement: form.dechargement, transport: form.transport,
       fraisAnnexes: form.fraisAnnexes, prime: form.prime,
+      fournisseur: form.entity === "CAPI" ? form.fournisseur.trim() : null,
     });
     toast.success(`Lot ${id} enregistré.`);
     onClose();
@@ -285,6 +290,11 @@ function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void 
             </Select>
           </Field>
           <Field label="Nom entité"><Input value={form.entityName} disabled={form.entity === "CAPI"} onChange={(e) => setForm({ ...form, entityName: e.target.value })} /></Field>
+          {form.entity === "CAPI" && (
+            <Field label="Fournisseur (producteur/vendeur)">
+              <Input value={form.fournisseur} placeholder="Nom du fournisseur" onChange={(e) => setForm({ ...form, fournisseur: e.target.value })} />
+            </Field>
+          )}
           <Field label="Variété">
             <Select value={form.variete} onValueChange={(v) => setForm({ ...form, variete: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
