@@ -64,7 +64,7 @@ function ParametresPage() {
           <div>
             <h3 className="font-display text-base mb-3">Prix de vente du riz (FCFA / kg)</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Field label="Riz blanc" value={form.prixRizBlanc} onChange={(v) => setForm({ ...form, prixRizBlanc: v })} suffix="FCFA/kg" />
+              <Field label="Long grain" value={form.prixRizBlanc} onChange={(v) => setForm({ ...form, prixRizBlanc: v })} suffix="FCFA/kg" />
               <Field label="2X Cassé" value={form.prix2xCasse} onChange={(v) => setForm({ ...form, prix2xCasse: v })} suffix="FCFA/kg" />
               <Field label="Fine Brisure" value={form.prixFineBrisure} onChange={(v) => setForm({ ...form, prixFineBrisure: v })} suffix="FCFA/kg" />
             </div>
@@ -74,8 +74,8 @@ function ParametresPage() {
             <h3 className="font-display text-base mb-1">Usinage — Coût de charge (interne CAPI)</h3>
             <p className="text-xs text-muted-foreground mb-3">Ce que le traitement coûte réellement à CAPI, utilisé pour son propre suivi financier.</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Field label="Décorticage" value={form.puDecorticageCharge} onChange={(v) => setForm({ ...form, puDecorticageCharge: v })} suffix="FCFA/kg riz blanc" />
-              <Field label="Calibrage" value={form.puCalibrageCharge} onChange={(v) => setForm({ ...form, puCalibrageCharge: v })} suffix="FCFA/kg riz blanc" />
+              <Field label="Décorticage" value={form.puDecorticageCharge} onChange={(v) => setForm({ ...form, puDecorticageCharge: v })} suffix="FCFA/kg long grain" />
+              <Field label="Calibrage" value={form.puCalibrageCharge} onChange={(v) => setForm({ ...form, puCalibrageCharge: v })} suffix="FCFA/kg long grain" />
               <Field label="Trie optique" value={form.puTriageCharge} onChange={(v) => setForm({ ...form, puTriageCharge: v })} suffix="FCFA/kg riz non trié" />
             </div>
           </div>
@@ -83,9 +83,10 @@ function ParametresPage() {
           <div className="border-t border-border pt-5">
             <h3 className="font-display text-base mb-1">Usinage — Coût de facturation (partenaires / prestataires)</h3>
             <p className="text-xs text-muted-foreground mb-3">Ce que CAPI facture au tiers propriétaire du lot pour la prestation rendue.</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Field label="Décorticage — Tranche A" value={form.puDecorticageFactureA} onChange={(v) => setForm({ ...form, puDecorticageFactureA: v })} suffix="FCFA/kg riz blanc" />
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <Field label="Décorticage — Tranche A" value={form.puDecorticageFactureA} onChange={(v) => setForm({ ...form, puDecorticageFactureA: v })} suffix="FCFA/kg long grain" />
               <Field label="Décorticage — Tranche B" value={form.puDecorticageFactureB} onChange={(v) => setForm({ ...form, puDecorticageFactureB: v })} suffix="FCFA/kg paddy" />
+              <Field label="Décorticage — Tranche Ecos" value={form.puDecorticageFactureEcos} onChange={(v) => setForm({ ...form, puDecorticageFactureEcos: v })} suffix="FCFA/kg long grain" />
               <Field label="Trie optique" value={form.puTriageFacture} onChange={(v) => setForm({ ...form, puTriageFacture: v })} suffix="FCFA/kg riz non trié" />
             </div>
           </div>

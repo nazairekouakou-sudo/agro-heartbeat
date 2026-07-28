@@ -12,6 +12,7 @@ export type Tarifs = {
   puDecorticageCharge: number;   // coût interne CAPI (FCFA/kg riz blanc)
   puDecorticageFactureA: number; // tranche A facturée au tiers (FCFA/kg riz blanc)
   puDecorticageFactureB: number; // tranche B facturée au tiers (FCFA/kg paddy)
+  puDecorticageFactureEcos: number; // tranche Ecos facturée au tiers (FCFA/kg long grain)
   puCalibrageCharge: number;     // coût interne CAPI (FCFA/kg riz blanc)
   puTriageCharge: number;        // coût interne CAPI (FCFA/kg riz blanc non trié)
   puTriageFacture: number;       // facturé au tiers (FCFA/kg riz blanc non trié)
@@ -22,7 +23,7 @@ export type Tarifs = {
 
 const DEFAULT_TARIFS: Tarifs = {
   prixRizBlanc: 550, prix2xCasse: 450, prixFineBrisure: 350,
-  puDecorticageCharge: 5, puDecorticageFactureA: 40, puDecorticageFactureB: 50,
+  puDecorticageCharge: 5, puDecorticageFactureA: 40, puDecorticageFactureB: 50, puDecorticageFactureEcos: 30,
   puCalibrageCharge: 3,
   puTriageCharge: 3, puTriageFacture: 15,
   puSechage: 50,
@@ -50,7 +51,8 @@ function tarifsFromRow(r: any): Tarifs {
   return {
     prixRizBlanc: Number(r.prix_riz_blanc), prix2xCasse: Number(r.prix_2x_casse), prixFineBrisure: Number(r.prix_fine_brisure),
     puDecorticageCharge: Number(r.pu_decorticage_charge), puDecorticageFactureA: Number(r.pu_decorticage_facture_a),
-    puDecorticageFactureB: Number(r.pu_decorticage_facture_b), puCalibrageCharge: Number(r.pu_calibrage_charge),
+    puDecorticageFactureB: Number(r.pu_decorticage_facture_b), puDecorticageFactureEcos: Number(r.pu_decorticage_facture_ecos),
+    puCalibrageCharge: Number(r.pu_calibrage_charge),
     puTriageCharge: Number(r.pu_triage_charge), puTriageFacture: Number(r.pu_triage_facture),
     puSechage: Number(r.pu_sechage),
     updatedAt: r.updated_at, updatedBy: r.updated_by,
@@ -93,7 +95,7 @@ export function useTarifs() {
 }
 
 export function prixParCategorie(t: Tarifs, categorie: string): number {
-  if (categorie === "Riz blanc") return t.prixRizBlanc;
+  if (categorie === "Long grain") return t.prixRizBlanc;
   if (categorie === "2X Cassé") return t.prix2xCasse;
   if (categorie === "Fine Brisure") return t.prixFineBrisure;
   return t.prixRizBlanc;
@@ -110,6 +112,7 @@ export const tarifsActions = {
         ...(patch.puDecorticageCharge !== undefined && { pu_decorticage_charge: patch.puDecorticageCharge }),
         ...(patch.puDecorticageFactureA !== undefined && { pu_decorticage_facture_a: patch.puDecorticageFactureA }),
         ...(patch.puDecorticageFactureB !== undefined && { pu_decorticage_facture_b: patch.puDecorticageFactureB }),
+        ...(patch.puDecorticageFactureEcos !== undefined && { pu_decorticage_facture_ecos: patch.puDecorticageFactureEcos }),
         ...(patch.puCalibrageCharge !== undefined && { pu_calibrage_charge: patch.puCalibrageCharge }),
         ...(patch.puTriageCharge !== undefined && { pu_triage_charge: patch.puTriageCharge }),
         ...(patch.puTriageFacture !== undefined && { pu_triage_facture: patch.puTriageFacture }),

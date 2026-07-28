@@ -196,7 +196,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-const rizCategories: RizCategorie[] = ["Riz blanc", "2X Cassé", "Fine Brisure"];
+const rizCategories: RizCategorie[] = ["Long grain", "2X Cassé", "Fine Brisure"];
 
 function NewCommandeDialog({
   open, onClose, decorticages, existingCount,
@@ -210,7 +210,7 @@ function NewCommandeDialog({
   const [form, setForm] = useState({
     date: gestionActions.todayISO(),
     lotId: lotIds[0] ?? "",
-    categorie: "Riz blanc" as RizCategorie,
+    categorie: "Long grain" as RizCategorie,
     quantite: 0,
     prixVente: tarifs.prixRizBlanc,
     boutique: BOUTIQUES[0] as string,

@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { usePaddy, type Appro, type LotStatus } from "@/lib/paddyStore";
+import { usePaddy, reliquat, type Appro, type LotStatus } from "@/lib/paddyStore";
 import { useUsinage, type Decorticage } from "@/lib/usinageStore";
 import { useGestion, gestionActions, type RizCategorie } from "@/lib/gestionStore";
 import { useAuth } from "@/lib/authStore";
@@ -73,7 +73,7 @@ function GestionPage() {
     () =>
       appros
         .filter((a) => a.status === "Collecte" || a.status === "En séchage" || a.status === "Stocké")
-        .reduce((sum, a) => sum + a.poids, 0) / 1000,
+        .reduce((sum, a) => sum + (a.poids ?? 0), 0) / 1000,
     [appros],
   );
 
@@ -95,7 +95,7 @@ function GestionPage() {
     for (const d of decorticages) {
       const appro = appros.find((a) => a.id === d.lotId);
       const entity = appro?.entityName ?? "—";
-      if (d.lg1x > 0) rows.push({ date: d.date, lotId: d.lotId, categorie: "Riz blanc", qte: d.lg1x, entity });
+      if (d.lg1x > 0) rows.push({ date: d.date, lotId: d.lotId, categorie: "Long grain", qte: d.lg1x, entity });
       if (d.casse2x > 0) rows.push({ date: d.date, lotId: d.lotId, categorie: "2X Cassé", qte: d.casse2x, entity });
       if (d.fb > 0) rows.push({ date: d.date, lotId: d.lotId, categorie: "Fine Brisure", qte: d.fb, entity });
     }
@@ -151,12 +151,16 @@ function GestionPage() {
 
         {tab === "stock-paddy" && (
           <DataTable
-            columns={["N° Lot", "Zone", "Entité", "Variété", "TH", "Sacs", "Poids (kg)", "Statut", "Dernière opération"]}
-            rows={appros.map((a) => [
-              a.id, a.zone, a.entityName, a.variete, `${a.th}%`, a.sacs, kg(a.poids),
-              <StatusPill key={a.id} k={a.status} tone={statusTone(a.status)} />,
-              derniereOperation(a),
-            ])}
+            columns={["N° Lot", "Zone", "Entité", "Variété", "TH", "Sacs", "Poids (kg)", "Reliquat", "Statut", "Dernière opération"]}
+            rows={appros.map((a) => {
+              const r = reliquat(a, sorties, decorticages);
+              return [
+                a.id, a.zone, a.entityName, a.variete, `${a.th}%`, a.sacs, a.poids !== null ? kg(a.poids) : "— (au sac)",
+                `${r.sacs} sac${r.sacs > 1 ? "s" : ""}${r.poids !== null ? ` · ${kg(r.poids)} kg` : ""}`,
+                <StatusPill key={a.id} k={a.status} tone={statusTone(a.status)} />,
+                derniereOperation(a),
+              ];
+            })}
           />
         )}
 
@@ -285,7 +289,7 @@ function StatusPill({ k, tone }: { k: string; tone: "ok" | "warn" | "muted" }) {
   return <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] ${m[tone]}`}>{k}</span>;
 }
 
-const rizCategories: RizCategorie[] = ["Riz blanc", "2X Cassé", "Fine Brisure"];
+const rizCategories: RizCategorie[] = ["Long grain", "2X Cassé", "Fine Brisure"];
 
 function NewSortieRizDialog({
   open,
@@ -302,7 +306,7 @@ function NewSortieRizDialog({
     date: gestionActions.todayISO(),
     commandeId: "",
     lotId: lotIds[0] ?? "",
-    categorie: "Riz blanc" as RizCategorie,
+    categorie: "Long grain" as RizCategorie,
     quantite: 0,
     prixVente: tarifs.prixRizBlanc,
   });

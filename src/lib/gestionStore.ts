@@ -4,7 +4,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "./supabaseClient";
 import type { Entity } from "./paddyStore";
 
-export type RizCategorie = "Riz blanc" | "2X Cassé" | "Fine Brisure";
+export type RizCategorie = "Long grain" | "2X Cassé" | "Fine Brisure";
 
 export type SortieRiz = {
   id: string;

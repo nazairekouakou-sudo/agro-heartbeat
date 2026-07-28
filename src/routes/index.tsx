@@ -98,11 +98,11 @@ function Dashboard() {
 
   // ---------- KPI ----------
   const paddy7 = useMemo(
-    () => appros.filter((a) => inRange(a.dateEntree, daysAgoISO(6), daysAgoISO(0))).reduce((s, a) => s + a.poids, 0),
+    () => appros.filter((a) => inRange(a.dateEntree, daysAgoISO(6), daysAgoISO(0))).reduce((s, a) => s + (a.poids ?? 0), 0),
     [appros],
   );
   const paddyPrev7 = useMemo(
-    () => appros.filter((a) => inRange(a.dateEntree, daysAgoISO(13), daysAgoISO(7))).reduce((s, a) => s + a.poids, 0),
+    () => appros.filter((a) => inRange(a.dateEntree, daysAgoISO(13), daysAgoISO(7))).reduce((s, a) => s + (a.poids ?? 0), 0),
     [appros],
   );
   const paddyDelta = pctDelta(paddy7, paddyPrev7);
@@ -140,21 +140,21 @@ function Dashboard() {
       const label = new Date(date + "T00:00:00").toLocaleDateString("fr-FR", { weekday: "short" });
       return {
         m: label.charAt(0).toUpperCase() + label.slice(1),
-        propre: +tonnes(dayLots.filter((a) => a.entity === "CAPI").reduce((s, a) => s + a.poids, 0)).toFixed(1),
-        partenaires: +tonnes(dayLots.filter((a) => a.entity === "Partenaire").reduce((s, a) => s + a.poids, 0)).toFixed(1),
-        prestations: +tonnes(dayLots.filter((a) => a.entity === "Prestataire").reduce((s, a) => s + a.poids, 0)).toFixed(1),
+        propre: +tonnes(dayLots.filter((a) => a.entity === "CAPI").reduce((s, a) => s + (a.poids ?? 0), 0)).toFixed(1),
+        partenaires: +tonnes(dayLots.filter((a) => a.entity === "Partenaire").reduce((s, a) => s + (a.poids ?? 0), 0)).toFixed(1),
+        prestations: +tonnes(dayLots.filter((a) => a.entity === "Prestataire").reduce((s, a) => s + (a.poids ?? 0), 0)).toFixed(1),
       };
     });
   }, [appros]);
 
   // ---------- Répartition par modèle (tout l'historique) ----------
   const repartition = useMemo(() => {
-    const total = appros.reduce((s, a) => s + a.poids, 0);
+    const total = appros.reduce((s, a) => s + (a.poids ?? 0), 0);
     if (total === 0) return [];
     const parts: [string, string, number][] = [
-      ["Compte propre", "var(--color-primary)", appros.filter((a) => a.entity === "CAPI").reduce((s, a) => s + a.poids, 0)],
-      ["Partenaires", "var(--color-secondary)", appros.filter((a) => a.entity === "Partenaire").reduce((s, a) => s + a.poids, 0)],
-      ["Prestations tiers", "var(--color-gold)", appros.filter((a) => a.entity === "Prestataire").reduce((s, a) => s + a.poids, 0)],
+      ["Compte propre", "var(--color-primary)", appros.filter((a) => a.entity === "CAPI").reduce((s, a) => s + (a.poids ?? 0), 0)],
+      ["Partenaires", "var(--color-secondary)", appros.filter((a) => a.entity === "Partenaire").reduce((s, a) => s + (a.poids ?? 0), 0)],
+      ["Prestations tiers", "var(--color-gold)", appros.filter((a) => a.entity === "Prestataire").reduce((s, a) => s + (a.poids ?? 0), 0)],
     ];
     return parts.filter(([, , v]) => v > 0).map(([name, color, v]) => ({ name, color, value: Math.round((v / total) * 100) }));
   }, [appros]);
@@ -192,7 +192,7 @@ function Dashboard() {
       byName.set(a.entityName, [...(byName.get(a.entityName) ?? []), a]);
     }
     return Array.from(byName.entries()).map(([nom, lots]) => {
-      const stockKg = lots.filter((a) => a.status === "Collecte" || a.status === "En séchage" || a.status === "Stocké").reduce((s, a) => s + a.poids, 0);
+      const stockKg = lots.filter((a) => a.status === "Collecte" || a.status === "En séchage" || a.status === "Stocké").reduce((s, a) => s + (a.poids ?? 0), 0);
       const actif = lots.some((a) => a.dateEntree >= daysAgoISO(45));
       return { nom, lots: lots.length, stock: fmtT(stockKg), statut: actif ? "Actif" : "En attente" };
     });
@@ -206,7 +206,7 @@ function Dashboard() {
       items.push({
         type: "Entrée paddy", ref: a.id, partie: a.entityName,
         modele: a.entity === "CAPI" ? "Compte propre" : a.entity === "Partenaire" ? "Partenaire" : "Prestataire",
-        qte: fmtT(a.poids), date: a.dateEntree, tone: "success",
+        qte: fmtT(a.poids ?? 0), date: a.dateEntree, tone: "success",
       });
     }
     for (const s of sortiesRiz.slice(0, 6)) {

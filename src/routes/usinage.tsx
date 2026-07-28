@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { usePaddy, type Appro } from "@/lib/paddyStore";
+import { usePaddy, reliquat, type Appro } from "@/lib/paddyStore";
 import { useGestion, gestionActions, type ReceptionRizExterne } from "@/lib/gestionStore";
 import { useTarifs } from "@/lib/tarifsStore";
 import {
@@ -294,7 +294,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 /* --------------------------------- Forms --------------------------------- */
 
 function NewDecorticageDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { appros } = usePaddy();
+  const { appros, sorties } = usePaddy();
+  const { decorticages: decorticagesExistants } = useUsinage();
   const tarifs = useTarifs();
   const [form, setForm] = useState({
     date: usinageActions.todayISO(), lotId: "",
@@ -302,7 +303,7 @@ function NewDecorticageDialog({ open, onClose }: { open: boolean; onClose: () =>
     lg1x: 0, casse2x: 0, fb: 0,
     equipe: "Équipe A", puUsinage: tarifs.puDecorticageCharge,
   });
-  const [tranche, setTranche] = useState<"A" | "B">("A");
+  const [tranche, setTranche] = useState<"A" | "B" | "ecos">("A");
   const [prixFacture, setPrixFacture] = useState(tarifs.puDecorticageFactureA);
 
   useEffect(() => {
@@ -312,15 +313,19 @@ function NewDecorticageDialog({ open, onClose }: { open: boolean; onClose: () =>
 
   const lotSelectionne = appros.find((a) => a.id === form.lotId);
   const factureAuTiers = lotSelectionne && (lotSelectionne.entity === "Partenaire" || lotSelectionne.entity === "Prestataire");
+  const dispo = lotSelectionne ? reliquat(lotSelectionne, sorties, decorticagesExistants) : null;
 
   function pickLot(id: string) {
     const a = appros.find((x) => x.id === id);
     setForm({ ...form, lotId: id, sacs: a?.sacs ?? 0, poidsPaddy: a?.poids ?? 0, th: a?.th ?? 13 });
+    if (a?.tranche) setTrancheChoice(a.tranche as "A" | "B" | "ecos");
   }
 
-  function setTrancheChoice(t: "A" | "B") {
+  function setTrancheChoice(t: "A" | "B" | "ecos") {
     setTranche(t);
-    setPrixFacture(t === "A" ? tarifs.puDecorticageFactureA : tarifs.puDecorticageFactureB);
+    setPrixFacture(
+      t === "A" ? tarifs.puDecorticageFactureA : t === "B" ? tarifs.puDecorticageFactureB : tarifs.puDecorticageFactureEcos,
+    );
   }
 
   // Preview computed values
@@ -331,7 +336,7 @@ function NewDecorticageDialog({ open, onClose }: { open: boolean; onClose: () =>
     equipe: form.equipe, puUsinage: form.puUsinage,
   });
 
-  const montantFacture = tranche === "A" ? preview.rizBlanchi * prixFacture : form.poidsPaddy * prixFacture;
+  const montantFacture = tranche === "B" ? form.poidsPaddy * prixFacture : preview.rizBlanchi * prixFacture;
 
   function submit() {
     if (!form.lotId || !form.poidsPaddy || (form.lg1x + form.casse2x + form.fb) === 0) {
@@ -339,6 +344,9 @@ function NewDecorticageDialog({ open, onClose }: { open: boolean; onClose: () =>
     }
     if (preview.rizBlanchi > form.poidsPaddy) {
       toast.error("Le riz blanchi ne peut pas dépasser le poids du paddy."); return;
+    }
+    if (dispo && form.sacs > dispo.sacs) {
+      toast.error(`Stock insuffisant : seulement ${dispo.sacs} sac(s) restant(s) sur ce lot.`); return;
     }
     const facturation: Facturation | null = factureAuTiers && lotSelectionne
       ? { tiers: lotSelectionne.entityName, montantFacture, typePrestation: "usinage" }
@@ -374,6 +382,11 @@ function NewDecorticageDialog({ open, onClose }: { open: boolean; onClose: () =>
                 {appros.map((a) => <SelectItem key={a.id} value={a.id}>{a.id} — {a.zone} · {a.variete} ({a.entity})</SelectItem>)}
               </SelectContent>
             </Select>
+            {dispo && (
+              <p className={`text-xs mt-1 ${form.sacs > dispo.sacs ? "text-destructive" : "text-muted-foreground"}`}>
+                Stock disponible : {dispo.sacs} sac(s){dispo.poids !== null ? ` · ${dispo.poids.toLocaleString("fr-FR")} kg` : ""}
+              </p>
+            )}
           </Field>
           <Field label="Équipe">
             <Select value={form.equipe} onValueChange={(v) => setForm({ ...form, equipe: v })}>
@@ -394,7 +407,7 @@ function NewDecorticageDialog({ open, onClose }: { open: boolean; onClose: () =>
         <div className="mt-2 pt-4 border-t border-border">
           <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">Sortie décorticage</div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Field label="Riz blanc (kg)"><Input type="number" value={form.lg1x || ""} onChange={(e) => setForm({ ...form, lg1x: +e.target.value })} /></Field>
+            <Field label="Long grain (kg)"><Input type="number" value={form.lg1x || ""} onChange={(e) => setForm({ ...form, lg1x: +e.target.value })} /></Field>
             <Field label="2X Cassé (kg)"><Input type="number" value={form.casse2x || ""} onChange={(e) => setForm({ ...form, casse2x: +e.target.value })} /></Field>
             <Field label="FB (kg)"><Input type="number" value={form.fb || ""} onChange={(e) => setForm({ ...form, fb: +e.target.value })} /></Field>
             <Field label="PU coût interne (F/kg)"><Input type="number" value={form.puUsinage} onChange={(e) => setForm({ ...form, puUsinage: +e.target.value })} /></Field>
@@ -408,11 +421,12 @@ function NewDecorticageDialog({ open, onClose }: { open: boolean; onClose: () =>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <Field label="Tranche">
-                <Select value={tranche} onValueChange={(v) => setTrancheChoice(v as "A" | "B")}>
+                <Select value={tranche} onValueChange={(v) => setTrancheChoice(v as "A" | "B" | "ecos")}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="A">Tranche A — sur riz blanc</SelectItem>
+                    <SelectItem value="A">Tranche A — sur long grain</SelectItem>
                     <SelectItem value="B">Tranche B — sur paddy</SelectItem>
+                    <SelectItem value="ecos">Tranche Ecos — sur long grain</SelectItem>
                   </SelectContent>
                 </Select>
               </Field>

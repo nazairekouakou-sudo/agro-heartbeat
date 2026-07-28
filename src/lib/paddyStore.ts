@@ -2,6 +2,21 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "./supabaseClient";
 
+type Facturation = { tiers: string; montantFacture: number; typePrestation: "sechage" | "collecte" };
+
+function nextFactureId() {
+  return `FACT-${Date.now().toString(36).toUpperCase()}`;
+}
+
+async function creerFacturePrestation(f: Facturation, lotId: string, date: string) {
+  if (f.montantFacture <= 0) return;
+  const { error } = await supabase.from("prestations_factures").insert({
+    id: nextFactureId(), date, lot_id: lotId, tiers: f.tiers,
+    type_prestation: f.typePrestation, montant_facture: f.montantFacture,
+  });
+  if (error) console.error("[paddyStore] creerFacturePrestation:", error.message);
+}
+
 export type Entity = "CAPI" | "Partenaire" | "Prestataire";
 export type LotStatus =
   | "Collecte"
@@ -22,7 +37,7 @@ export type Appro = {
   th: number;
   ti: number;
   sacs: number;
-  poids: number;
+  poids: number | null; // optionnel pour les lots tiers (Partenaire/Prestataire) : comptage au sac
   pm: number;
   agent: string;
   pu: number;
@@ -35,6 +50,7 @@ export type Appro = {
   prime: number;
   chargeTotale: number;
   status: LotStatus;
+  tranche: "A" | "B" | "ecos" | null; // tranche de facturation choisie pour les lots tiers
 };
 
 export type Sechage = {
@@ -115,11 +131,11 @@ function approFromRow(r: any): Appro {
   return {
     id: r.id, dateAppro: r.date_appro, dateEntree: r.date_entree, zone: r.zone,
     entity: r.entity, entityName: r.entity_name, fournisseur: r.fournisseur ?? null, variete: r.variete,
-    th: Number(r.th), ti: Number(r.ti), sacs: r.sacs, poids: Number(r.poids),
+    th: Number(r.th), ti: Number(r.ti), sacs: r.sacs, poids: r.poids === null ? null : Number(r.poids),
     pm: Number(r.pm), agent: r.agent, pu: Number(r.pu), cap: Number(r.cap),
     charge: Number(r.charge), pesage: Number(r.pesage), dechargement: Number(r.dechargement),
     transport: Number(r.transport), fraisAnnexes: Number(r.frais_annexes), prime: Number(r.prime),
-    chargeTotale: Number(r.charge_totale), status: r.status,
+    chargeTotale: Number(r.charge_totale), status: r.status, tranche: r.tranche ?? null,
   };
 }
 
@@ -151,10 +167,12 @@ function mkAppro(
   id: string,
   status: LotStatus,
 ): Appro {
-  const pm = base.sacs ? +(base.poids / base.sacs).toFixed(2) : 0;
-  const cap = base.poids * base.pu;
+  const poids = base.poids ?? 0;
+  const pm = base.sacs ? +(poids / base.sacs).toFixed(2) : 0;
+  const cap = poids * base.pu;
+  const capCompte = base.entity === "CAPI" ? cap : 0; // prestation de service pour les tiers, pas un achat CAPI
   const chargeTotale =
-    cap + base.charge + base.pesage + base.dechargement +
+    capCompte + base.charge + base.pesage + base.dechargement +
     base.transport + base.fraisAnnexes + base.prime;
   return { ...base, id, pm, cap, chargeTotale, status };
 }
@@ -206,6 +224,25 @@ export function usePaddy() {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
+// ---------- Reliquat de stock (sacs + poids restants sur un lot) ----------
+// Utilisé pour l'affichage (Gestion > Stock paddy) et pour bloquer toute
+// opération qui dépasserait le stock réellement disponible sur le lot.
+export function reliquat(
+  appro: Appro,
+  sorties: Sortie[],
+  consommations: { lotId: string; sacs: number; poidsPaddy?: number }[] = [],
+) {
+  const sortiSacs = sorties.filter((s) => s.lotId === appro.id).reduce((s, x) => s + x.sacs, 0);
+  const consommeSacs = consommations.filter((c) => c.lotId === appro.id).reduce((s, x) => s + x.sacs, 0);
+  const sacsRestants = Math.max(0, appro.sacs - sortiSacs - consommeSacs);
+
+  const sortiPoids = sorties.filter((s) => s.lotId === appro.id).reduce((s, x) => s + x.poids, 0);
+  const consommePoids = consommations.filter((c) => c.lotId === appro.id).reduce((s, x) => s + (x.poidsPaddy ?? 0), 0);
+  const poidsRestant = appro.poids === null ? null : Math.max(0, appro.poids - sortiPoids - consommePoids);
+
+  return { sacs: sacsRestants, poids: poidsRestant };
+}
+
 export const paddyActions = {
   todayISO,
   nextLotId: () => nextLotId(state.appros),
@@ -224,7 +261,7 @@ export const paddyActions = {
         th: input.th, ti: input.ti, sacs: input.sacs, poids: input.poids, agent: input.agent,
         pu: input.pu, charge: input.charge, pesage: input.pesage,
         dechargement: input.dechargement, transport: input.transport,
-        frais_annexes: input.fraisAnnexes, prime: input.prime, status: "Collecte",
+        frais_annexes: input.fraisAnnexes, prime: input.prime, status: "Collecte", tranche: input.tranche,
       })
       .then(({ error }) => {
         if (error) {
@@ -233,6 +270,16 @@ export const paddyActions = {
           emit();
         } else {
           refetchAll();
+          // Prestation de service pour les tiers : les charges annexes de
+          // réception (déchargement, transport, pesage) sont facturées au
+          // partenaire/prestataire, pas absorbées comme coût CAPI.
+          if (input.entity !== "CAPI") {
+            const montantAnnexes = input.charge + input.pesage + input.dechargement + input.transport;
+            creerFacturePrestation(
+              { tiers: input.entityName, montantFacture: montantAnnexes, typePrestation: "collecte" },
+              id, input.dateEntree,
+            );
+          }
         }
       });
 
@@ -270,6 +317,11 @@ export const paddyActions = {
         .update({ status: "Stocké", poids: input.poidsApres, th: input.thApres })
         .eq("id", input.lotId);
       if (approErr) console.error("[paddyStore] update appro after séchage:", approErr.message);
+
+      const lot = state.appros.find((a) => a.id === input.lotId);
+      if (lot && lot.entity !== "CAPI") {
+        await creerFacturePrestation({ tiers: lot.entityName, montantFacture: montant, typePrestation: "sechage" }, input.lotId, input.date);
+      }
 
       refetchAll();
     })();

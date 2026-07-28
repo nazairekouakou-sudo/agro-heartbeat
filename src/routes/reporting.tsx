@@ -115,7 +115,7 @@ function RapportsParCentre({ from, to }: { from: string; to: string }) {
   const versementsP = useMemo(() => versements.filter((v) => inRange(v.date, from, to)), [versements, from, to]);
 
   // ---- Centre Amont (Paddy) ----
-  const volumeCollecteT = approsP.reduce((s, a) => s + a.poids, 0) / 1000;
+  const volumeCollecteT = approsP.reduce((s, a) => s + (a.poids ?? 0), 0) / 1000;
   const perteSechage = useMemo(() => {
     const totalAvant = sechagesP.reduce((s, x) => s + x.poidsAvant, 0);
     const totalApres = sechagesP.reduce((s, x) => s + x.poidsApres, 0);
@@ -126,7 +126,7 @@ function RapportsParCentre({ from, to }: { from: string; to: string }) {
     const map = new Map<string, { zone: string; volumeKg: number; achat: number; charges: number; total: number }>();
     for (const a of approsP) {
       const cur = map.get(a.zone) ?? { zone: a.zone, volumeKg: 0, achat: 0, charges: 0, total: 0 };
-      cur.volumeKg += a.poids;
+      cur.volumeKg += a.poids ?? 0;
       cur.achat += a.cap;
       cur.charges += a.charge + a.pesage + a.dechargement + a.transport + a.fraisAnnexes + a.prime;
       cur.total += a.chargeTotale;
@@ -406,7 +406,7 @@ function RapportPartenaire({
   const mesLots = useMemo(() => appros.filter((a) => a.entityName === entityName), [appros, entityName]);
   const lotIds = useMemo(() => new Set(mesLots.map((a) => a.id)), [mesLots]);
 
-  const volumePaddyKg = mesLots.filter((a) => inRange(a.dateAppro, from, to)).reduce((s, a) => s + a.poids, 0);
+  const volumePaddyKg = mesLots.filter((a) => inRange(a.dateAppro, from, to)).reduce((s, a) => s + (a.poids ?? 0), 0);
   const couts = chargeLines.filter((l) => l.entityName === entityName);
   const depensesLibres = depenses.filter((d) => d.lotId && lotIds.has(d.lotId) && inRange(d.date, from, to));
   const totalCouts = couts.reduce((s, l) => s + l.montant, 0) + depensesLibres.reduce((s, d) => s + d.montant, 0);

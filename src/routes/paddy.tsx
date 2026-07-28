@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { usePaddy, paddyActions, type Entity, type LotStatus } from "@/lib/paddyStore";
+import { usePaddy, paddyActions, reliquat, type Entity, type LotStatus } from "@/lib/paddyStore";
+import { useUsinage } from "@/lib/usinageStore";
 import { useTarifs } from "@/lib/tarifsStore";
 
 export const Route = createFileRoute("/paddy")({
@@ -48,7 +49,7 @@ function PaddyPage() {
     );
   }, [appros, query]);
 
-  const totalStock = appros.reduce((s, a) => s + a.poids, 0);
+  const totalStock = appros.reduce((s, a) => s + (a.poids ?? 0), 0);
   const thAvg = appros.length ? appros.reduce((s, a) => s + a.th, 0) / appros.length : 0;
   const enSechage = appros.filter((a) => a.status === "En séchage").length;
 
@@ -113,7 +114,7 @@ function PaddyPage() {
               `${a.th}%`,
               `${a.ti}%`,
               a.sacs,
-              a.poids.toLocaleString("fr-FR"),
+              a.poids !== null ? a.poids.toLocaleString("fr-FR") : "— (au sac)",
               a.pm,
               <StatusBadge s={a.status} />,
               a.agent,
@@ -154,7 +155,7 @@ function PaddyPage() {
               <DataTable
                 columns={["N° Lot", "Poids", "PU", "CAP", "Chargé", "Pesé", "Déchargé", "Transport", "Annexes", "Prime", "Charge totale"]}
                 rows={appros.map((a) => [
-                  a.id, a.poids.toLocaleString("fr-FR"), a.pu,
+                  a.id, a.poids !== null ? a.poids.toLocaleString("fr-FR") : "—", a.pu,
                   fcfa(a.cap), fcfa(a.charge), fcfa(a.pesage), fcfa(a.dechargement),
                   fcfa(a.transport), fcfa(a.fraisAnnexes), fcfa(a.prime),
                   <strong>{fcfa(a.chargeTotale)}</strong>,
@@ -238,16 +239,21 @@ function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void 
     zone: "", entity: "CAPI" as Entity, entityName: "CAPI", variete: "JT 11",
     th: 22, ti: 3, sacs: 0, poids: 0, agent: "", fournisseur: "",
     pu: 300, charge: 0, pesage: 0, dechargement: 0,
-    transport: 0, fraisAnnexes: 0, prime: 0,
+    transport: 0, fraisAnnexes: 0, prime: 0, tranche: "A" as "A" | "B" | "ecos",
   });
 
   const pm = form.sacs ? +(form.poids / form.sacs).toFixed(2) : 0;
   const cap = form.poids * form.pu;
-  const total = cap + form.charge + form.pesage + form.dechargement + form.transport + form.fraisAnnexes + form.prime;
+  const capCompte = form.entity === "CAPI" ? cap : 0;
+  const total = capCompte + form.charge + form.pesage + form.dechargement + form.transport + form.fraisAnnexes + form.prime;
+  const estTiers = form.entity !== "CAPI";
 
   function submit() {
-    if (!form.zone || !form.agent || !form.sacs || !form.poids) {
-      toast.error("Zone, agent, sacs et poids sont obligatoires."); return;
+    if (!form.zone || !form.agent || !form.sacs) {
+      toast.error("Zone, agent et nombre de sacs sont obligatoires."); return;
+    }
+    if (form.entity === "CAPI" && !form.poids) {
+      toast.error("Le poids est obligatoire pour un lot CAPI (compte propre)."); return;
     }
     if (form.entity === "CAPI" && !form.fournisseur.trim()) {
       toast.error("Le nom du fournisseur est obligatoire pour un lot CAPI."); return;
@@ -256,11 +262,12 @@ function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void 
       dateAppro: form.dateEntree, dateEntree: form.dateEntree,
       zone: form.zone, entity: form.entity, entityName: form.entityName || form.entity,
       variete: form.variete, th: form.th, ti: form.ti,
-      sacs: form.sacs, poids: form.poids, agent: form.agent,
+      sacs: form.sacs, poids: form.poids > 0 ? form.poids : null, agent: form.agent,
       pu: form.pu, charge: form.charge, pesage: form.pesage,
       dechargement: form.dechargement, transport: form.transport,
       fraisAnnexes: form.fraisAnnexes, prime: form.prime,
       fournisseur: form.entity === "CAPI" ? form.fournisseur.trim() : null,
+      tranche: estTiers ? form.tranche : null,
     });
     toast.success(`Lot ${id} enregistré.`);
     onClose();
@@ -295,6 +302,18 @@ function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void 
               <Input value={form.fournisseur} placeholder="Nom du fournisseur" onChange={(e) => setForm({ ...form, fournisseur: e.target.value })} />
             </Field>
           )}
+          {estTiers && (
+            <Field label="Tranche de facturation">
+              <Select value={form.tranche} onValueChange={(v) => setForm({ ...form, tranche: v as "A" | "B" | "ecos" })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="A">Tranche A — sur long grain</SelectItem>
+                  <SelectItem value="B">Tranche B — sur paddy</SelectItem>
+                  <SelectItem value="ecos">Tranche Ecos — sur long grain</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+          )}
           <Field label="Variété">
             <Select value={form.variete} onValueChange={(v) => setForm({ ...form, variete: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -310,10 +329,18 @@ function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void 
           <Field label="TH (%)"><Input type="number" value={form.th} onChange={(e) => setForm({ ...form, th: +e.target.value })} /></Field>
           <Field label="TI (%)"><Input type="number" value={form.ti} onChange={(e) => setForm({ ...form, ti: +e.target.value })} /></Field>
           <Field label="Nb sacs"><Input type="number" value={form.sacs || ""} onChange={(e) => setForm({ ...form, sacs: +e.target.value })} /></Field>
-          <Field label="Poids total (kg)"><Input type="number" value={form.poids || ""} onChange={(e) => setForm({ ...form, poids: +e.target.value })} /></Field>
+          <Field label={estTiers ? "Poids total (kg) — optionnel" : "Poids total (kg)"}>
+            <Input type="number" value={form.poids || ""} onChange={(e) => setForm({ ...form, poids: +e.target.value })} />
+          </Field>
           <Field label="PM (auto)"><Input value={pm} disabled /></Field>
-          <Field label="PU (F/kg)"><Input type="number" value={form.pu} onChange={(e) => setForm({ ...form, pu: +e.target.value })} /></Field>
+          <Field label="PU (F/kg)"><Input type="number" value={form.pu} onChange={(e) => setForm({ ...form, pu: +e.target.value })} disabled={estTiers} /></Field>
         </div>
+        {estTiers && (
+          <p className="text-xs text-muted-foreground -mt-1">
+            Lot tiers : comptage au sac, le poids n'est pas obligatoire. Le prix d'achat ne concerne pas la
+            comptabilité CAPI — seules les charges annexes ci-dessous sont facturées à {form.entityName || "l'entité"}.
+          </p>
+        )}
 
         <div className="mt-2 pt-4 border-t border-border">
           <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-3">Charges annexes</div>
@@ -403,7 +430,8 @@ function NewSechageDialog({ open, onClose }: { open: boolean; onClose: () => voi
 }
 
 function NewSortieDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { appros } = usePaddy();
+  const { appros, sorties } = usePaddy();
+  const { decorticages } = useUsinage();
   const [form, setForm] = useState({
     date: paddyActions.todayISO(), lotId: "", th: 13, sacs: 0, poids: 0,
     destination: "Usinage", agent: "", charge: 0, pesage: 0, deplacement: 0,
@@ -414,8 +442,14 @@ function NewSortieDialog({ open, onClose }: { open: boolean; onClose: () => void
     setForm({ ...form, lotId: id, th: a?.th ?? 13, sacs: a?.sacs ?? 0, poids: a?.poids ?? 0 });
   }
 
+  const lotChoisi = appros.find((a) => a.id === form.lotId);
+  const dispo = lotChoisi ? reliquat(lotChoisi, sorties, decorticages) : null;
+
   function submit() {
-    if (!form.lotId || !form.poids || !form.agent) { toast.error("Lot, poids et agent requis."); return; }
+    if (!form.lotId || !form.agent) { toast.error("Lot et agent requis."); return; }
+    if (dispo && form.sacs > dispo.sacs) {
+      toast.error(`Stock insuffisant : seulement ${dispo.sacs} sac(s) restant(s) sur ce lot.`); return;
+    }
     paddyActions.addSortie(form);
     toast.success("Sortie enregistrée.");
     onClose();
@@ -469,7 +503,7 @@ function LotDetailSheet({ lotId, onClose }: { lotId: string | null; onClose: () 
   const timeline = useMemo(() => {
     if (!a) return [];
     const items: { date: string; label: string; detail: string }[] = [
-      { date: a.dateEntree, label: "Entrée", detail: `${a.sacs} sacs · ${a.poids.toLocaleString("fr-FR")} kg · TH ${a.th}%` },
+      { date: a.dateEntree, label: "Entrée", detail: `${a.sacs} sacs${a.poids !== null ? ` · ${a.poids.toLocaleString("fr-FR")} kg` : ""} · TH ${a.th}%` },
     ];
     sechages.filter((s) => s.lotId === a.id).forEach((s) => {
       items.push({ date: s.date, label: `Séchage (${s.jours}j)`, detail: `TH ${s.thInitial}% → ${s.thApres}% · variation ${s.variation} kg` });
@@ -498,7 +532,7 @@ function LotDetailSheet({ lotId, onClose }: { lotId: string | null; onClose: () 
             </SheetHeader>
 
             <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-              <Kv k="Sacs" v={a.sacs} /><Kv k="Poids" v={`${a.poids.toLocaleString("fr-FR")} kg`} />
+              <Kv k="Sacs" v={a.sacs} /><Kv k="Poids" v={a.poids !== null ? `${a.poids.toLocaleString("fr-FR")} kg` : "— (au sac)"} />
               <Kv k="TH / TI" v={`${a.th}% / ${a.ti}%`} /><Kv k="PM" v={`${a.pm} kg`} />
               <Kv k="Agent" v={a.agent} /><Kv k="PU" v={`${a.pu} F/kg`} />
               <Kv k="CAP" v={fcfa(a.cap)} /><Kv k="Charge totale" v={fcfa(a.chargeTotale)} />

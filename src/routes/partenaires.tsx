@@ -85,7 +85,7 @@ function PartenairesPage() {
     () =>
       mesLots
         .filter((a) => a.status === "Collecte" || a.status === "En séchage" || a.status === "Stocké")
-        .reduce((s, a) => s + a.poids, 0) / 1000,
+        .reduce((s, a) => s + (a.poids ?? 0), 0) / 1000,
     [mesLots],
   );
   const rizDisponibleT = useMemo(() => {
@@ -171,7 +171,7 @@ function PartenairesPage() {
               rows={mesLots.map((a) => {
                 const rizBlanchi = decorticagesParLot.get(a.id) ?? 0;
                 return [
-                  a.id, a.zone, a.variete, fmtDate(a.dateEntree), `${a.th}%`, a.poids.toLocaleString("fr-FR"),
+                  a.id, a.zone, a.variete, fmtDate(a.dateEntree), `${a.th}%`, (a.poids ?? 0).toLocaleString("fr-FR"),
                   etapeLot(a, decorticagesParLot.has(a.id), sortiesRizParLot.has(a.id)),
                   rizBlanchi > 0 ? `${rizBlanchi.toLocaleString("fr-FR")} kg` : "—",
                 ];
