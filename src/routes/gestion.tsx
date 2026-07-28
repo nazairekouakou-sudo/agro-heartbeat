@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { usePaddy, reliquat, type Appro, type LotStatus } from "@/lib/paddyStore";
 import { useUsinage, type Decorticage } from "@/lib/usinageStore";
-import { useGestion, gestionActions, type RizCategorie } from "@/lib/gestionStore";
+import { useGestion, gestionActions, type RizCategorie, type QualiteRizExterne, type DestinationRizExterne, QUALITES_RIZ_EXTERNE, DESTINATIONS_RIZ_EXTERNE } from "@/lib/gestionStore";
 import { useAuth } from "@/lib/authStore";
 import { useTarifs, prixParCategorie } from "@/lib/tarifsStore";
 
@@ -185,9 +185,9 @@ function GestionPage() {
               </p>
             )}
             <DataTable
-              columns={["N° Lot", "Date", "Origine", "Entité", "Poids (kg)", "Statut"]}
+              columns={["N° Lot", "Date", "Origine", "Entité", "Poids (kg)", "Qualité", "Destination", "Statut"]}
               rows={receptionsExternes.map((r) => [
-                r.id, fmtDate(r.date), r.entityType, r.entityName, kg(r.poids),
+                r.id, fmtDate(r.date), r.entityType, r.entityName, kg(r.poids), r.qualite, r.destination,
                 <StatusPill
                   key={r.id}
                   k={r.statut === "trie" ? "Trié" : r.statut === "en_triage" ? "En triage" : "Reçu"}
@@ -390,6 +390,8 @@ function NewReceptionExterneDialog({ open, onClose }: { open: boolean; onClose: 
     entityType: "Partenaire" as Appro["entity"],
     entityName: "",
     poids: 0,
+    qualite: "Blanc" as QualiteRizExterne,
+    destination: "Trieuse optique" as DestinationRizExterne,
   });
 
   function submit() {
@@ -398,9 +400,10 @@ function NewReceptionExterneDialog({ open, onClose }: { open: boolean; onClose: 
       return;
     }
     const id = gestionActions.addReceptionExterne({
-      date: form.date, entityType: form.entityType, entityName: form.entityName.trim(), poids: form.poids,
+      date: form.date, entityType: form.entityType, entityName: form.entityName.trim(),
+      poids: form.poids, qualite: form.qualite, destination: form.destination,
     });
-    toast.success(`Réception ${id} enregistrée. Ce lot est disponible pour le trie optique dans Usinage.`);
+    toast.success(`Réception ${id} enregistrée. Destination : ${form.destination}.`);
     onClose();
   }
 
@@ -411,7 +414,7 @@ function NewReceptionExterneDialog({ open, onClose }: { open: boolean; onClose: 
           <DialogTitle className="font-display">Nouvelle réception riz blanc externe</DialogTitle>
         </DialogHeader>
         <p className="text-xs text-muted-foreground -mt-2">
-          Riz déjà décortiqué, envoyé par un partenaire ou prestataire directement pour trie optique.
+          Riz déjà décortiqué, envoyé par un partenaire ou prestataire. Précisez la qualité et l'opération de destination.
         </p>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Date">
@@ -434,6 +437,28 @@ function NewReceptionExterneDialog({ open, onClose }: { open: boolean; onClose: 
           <Field label="Poids reçu (kg)">
             <Input type="number" value={form.poids || ""} onChange={(e) => setForm({ ...form, poids: Number(e.target.value) })} />
           </Field>
+          <Field label="Qualité du riz">
+            <Select value={form.qualite} onValueChange={(v) => setForm({ ...form, qualite: v as QualiteRizExterne })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {QUALITES_RIZ_EXTERNE.map((q) => (
+                  <SelectItem key={q} value={q}>{q}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+          <div className="col-span-2">
+            <Field label="Destination (opération)">
+              <Select value={form.destination} onValueChange={(v) => setForm({ ...form, destination: v as DestinationRizExterne })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {DESTINATIONS_RIZ_EXTERNE.map((d) => (
+                    <SelectItem key={d} value={d}>{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Annuler</Button>
