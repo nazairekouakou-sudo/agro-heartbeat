@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { usePaddy, reliquat, type Appro, type LotStatus } from "@/lib/paddyStore";
 import { useUsinage, type Decorticage } from "@/lib/usinageStore";
-import { useGestion, gestionActions, type RizCategorie } from "@/lib/gestionStore";
+import { useGestion, gestionActions, type RizCategorie, type QualiteRizExterne, type DestinationRizExterne, QUALITES_RIZ_EXTERNE, DESTINATIONS_RIZ_EXTERNE } from "@/lib/gestionStore";
 import { useAuth } from "@/lib/authStore";
 import { useTarifs, prixParCategorie } from "@/lib/tarifsStore";
 
