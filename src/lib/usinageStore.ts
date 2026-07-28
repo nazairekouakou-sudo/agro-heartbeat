@@ -214,7 +214,7 @@ export const usinageActions = {
   todayISO,
 
   addDecorticage(
-    input: Omit<Decorticage, "id" | "rizBlanchi" | "sonPaille" | "rendement" | "tauxCasse" | "qualite" | "coutUsinage">,
+    input: Omit<Decorticage, "id" | "rizBlanchi" | "sonPaille" | "rendement" | "tauxCasse" | "coutUsinage">,
     facturation?: Facturation | null,
   ) {
     const id = nextId("DEC", state.decorticages);
