@@ -232,15 +232,15 @@ function fmtDate(iso: string) {
 }
 function fcfa(n: number) { return n.toLocaleString("fr-FR") + " F"; }
 
-function QualiteBadge({ q }: { q: Qualite }) {
-  const map: Record<Qualite, string> = {
-    "Blanc premium": "bg-primary/15 text-primary border-primary/25",
-    "Blanc": "bg-secondary/15 text-secondary border-secondary/25",
-    "Moyen blanc": "bg-gold/25 text-foreground border-gold/40",
-    "Standard": "bg-muted text-foreground border-border",
-    "Écart": "bg-destructive/10 text-destructive border-destructive/25",
+function QualiteBadge({ q }: { q: Qualite | string }) {
+  const map: Record<string, string> = {
+    "Blanc": "bg-primary/15 text-primary border-primary/25",
+    "Moyen blanc": "bg-secondary/15 text-secondary border-secondary/25",
+    "Rouge": "bg-destructive/10 text-destructive border-destructive/25",
+    "Autre": "bg-muted text-foreground border-border",
   };
-  return <span className={`inline-flex px-2 py-0.5 rounded text-[10px] border ${map[q]}`}>{q}</span>;
+  const cls = map[q] ?? "bg-muted text-foreground border-border";
+  return <span className={`inline-flex px-2 py-0.5 rounded text-[10px] border ${cls}`}>{q}</span>;
 }
 
 function RendementBadge({ v }: { v: number }) {
