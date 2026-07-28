@@ -14,7 +14,7 @@ import { usePaddy, reliquat, type Appro } from "@/lib/paddyStore";
 import { useGestion, gestionActions, type ReceptionRizExterne } from "@/lib/gestionStore";
 import { useTarifs } from "@/lib/tarifsStore";
 import {
-  useUsinage, usinageActions, mkDecorticage, mkCalibrage, mkTrie,
+  useUsinage, usinageActions, mkDecorticage, mkCalibrage, mkTrie, QUALITES,
   type Qualite, type Decorticage, type LotSource, type Facturation,
 } from "@/lib/usinageStore";
 
