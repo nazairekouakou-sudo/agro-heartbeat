@@ -412,6 +412,14 @@ function NewDecorticageDialog({ open, onClose }: { open: boolean; onClose: () =>
             <Field label="2X Cassé (kg)"><Input type="number" value={form.casse2x || ""} onChange={(e) => setForm({ ...form, casse2x: +e.target.value })} /></Field>
             <Field label="FB (kg)"><Input type="number" value={form.fb || ""} onChange={(e) => setForm({ ...form, fb: +e.target.value })} /></Field>
             <Field label="PU coût interne (F/kg)"><Input type="number" value={form.puUsinage} onChange={(e) => setForm({ ...form, puUsinage: +e.target.value })} /></Field>
+            <Field label="Qualité du riz blanchi">
+              <Select value={form.qualite} onValueChange={(v) => setForm({ ...form, qualite: v as Qualite })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {QUALITES.map((q) => <SelectItem key={q} value={q}>{q}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
           </div>
         </div>
 
