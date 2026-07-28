@@ -356,7 +356,7 @@ function NewDecorticageDialog({ open, onClose }: { open: boolean; onClose: () =>
       date: form.date, lotId: form.lotId,
       sacs: form.sacs, poidsPaddy: form.poidsPaddy, th: form.th,
       lg1x: form.lg1x, casse2x: form.casse2x, fb: form.fb,
-      equipe: form.equipe, puUsinage: form.puUsinage,
+      equipe: form.equipe, puUsinage: form.puUsinage, qualite: form.qualite,
     }, facturation);
     toast.success(
       facturation
