@@ -302,6 +302,7 @@ function NewDecorticageDialog({ open, onClose }: { open: boolean; onClose: () =>
     sacs: 0, poidsPaddy: 0, th: 13,
     lg1x: 0, casse2x: 0, fb: 0,
     equipe: "Équipe A", puUsinage: tarifs.puDecorticageCharge,
+    qualite: "Blanc" as Qualite,
   });
   const [tranche, setTranche] = useState<"A" | "B" | "ecos">("A");
   const [prixFacture, setPrixFacture] = useState(tarifs.puDecorticageFactureA);
