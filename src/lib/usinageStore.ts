@@ -135,15 +135,14 @@ function trieFromRow(r: any): TrieOptique {
 // ---------- Calcul local optimiste ----------
 
 export function mkDecorticage(
-  base: Omit<Decorticage, "id" | "rizBlanchi" | "sonPaille" | "rendement" | "tauxCasse" | "qualite" | "coutUsinage"> & { id?: string },
+  base: Omit<Decorticage, "id" | "rizBlanchi" | "sonPaille" | "rendement" | "tauxCasse" | "coutUsinage"> & { id?: string },
 ): Decorticage {
   const rizBlanchi = +(base.lg1x + base.casse2x + base.fb).toFixed(1);
   const sonPaille = +(base.poidsPaddy - rizBlanchi).toFixed(1);
   const rendement = base.poidsPaddy ? +((rizBlanchi / base.poidsPaddy) * 100).toFixed(1) : 0;
   const tauxCasse = rizBlanchi ? +((base.casse2x / rizBlanchi) * 100).toFixed(1) : 0;
-  const qualite = computeQualite(rendement, tauxCasse);
   const coutUsinage = Math.round(base.poidsPaddy * base.puUsinage);
-  return { ...base, id: base.id ?? "", rizBlanchi, sonPaille, rendement, tauxCasse, qualite, coutUsinage };
+  return { ...base, id: base.id ?? "", rizBlanchi, sonPaille, rendement, tauxCasse, coutUsinage };
 }
 
 export function mkCalibrage(
