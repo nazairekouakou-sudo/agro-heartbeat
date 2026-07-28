@@ -185,9 +185,9 @@ function GestionPage() {
               </p>
             )}
             <DataTable
-              columns={["N° Lot", "Date", "Origine", "Entité", "Poids (kg)", "Statut"]}
+              columns={["N° Lot", "Date", "Origine", "Entité", "Poids (kg)", "Qualité", "Destination", "Statut"]}
               rows={receptionsExternes.map((r) => [
-                r.id, fmtDate(r.date), r.entityType, r.entityName, kg(r.poids),
+                r.id, fmtDate(r.date), r.entityType, r.entityName, kg(r.poids), r.qualite, r.destination,
                 <StatusPill
                   key={r.id}
                   k={r.statut === "trie" ? "Trié" : r.statut === "en_triage" ? "En triage" : "Reçu"}
