@@ -204,7 +204,8 @@ export const gestionActions = {
     supabase
       .from("receptions_riz_externe")
       .insert({
-        id, date: input.date, entity_type: input.entityType, entity_name: input.entityName, poids: input.poids,
+        id, date: input.date, entity_type: input.entityType, entity_name: input.entityName,
+        poids: input.poids, qualite: input.qualite, destination: input.destination,
       })
       .then(({ error }) => {
         if (error) {
