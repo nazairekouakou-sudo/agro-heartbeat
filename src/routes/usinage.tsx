@@ -14,7 +14,7 @@ import { usePaddy, reliquat, type Appro } from "@/lib/paddyStore";
 import { useGestion, gestionActions, type ReceptionRizExterne } from "@/lib/gestionStore";
 import { useTarifs } from "@/lib/tarifsStore";
 import {
-  useUsinage, usinageActions, mkDecorticage, mkCalibrage, mkTrie,
+  useUsinage, usinageActions, mkDecorticage, mkCalibrage, mkTrie, QUALITES,
   type Qualite, type Decorticage, type LotSource, type Facturation,
 } from "@/lib/usinageStore";
 
@@ -232,15 +232,15 @@ function fmtDate(iso: string) {
 }
 function fcfa(n: number) { return n.toLocaleString("fr-FR") + " F"; }
 
-function QualiteBadge({ q }: { q: Qualite }) {
-  const map: Record<Qualite, string> = {
-    "Blanc premium": "bg-primary/15 text-primary border-primary/25",
-    "Blanc": "bg-secondary/15 text-secondary border-secondary/25",
-    "Moyen blanc": "bg-gold/25 text-foreground border-gold/40",
-    "Standard": "bg-muted text-foreground border-border",
-    "Écart": "bg-destructive/10 text-destructive border-destructive/25",
+function QualiteBadge({ q }: { q: Qualite | string }) {
+  const map: Record<string, string> = {
+    "Blanc": "bg-primary/15 text-primary border-primary/25",
+    "Moyen blanc": "bg-secondary/15 text-secondary border-secondary/25",
+    "Rouge": "bg-destructive/10 text-destructive border-destructive/25",
+    "Autre": "bg-muted text-foreground border-border",
   };
-  return <span className={`inline-flex px-2 py-0.5 rounded text-[10px] border ${map[q]}`}>{q}</span>;
+  const cls = map[q] ?? "bg-muted text-foreground border-border";
+  return <span className={`inline-flex px-2 py-0.5 rounded text-[10px] border ${cls}`}>{q}</span>;
 }
 
 function RendementBadge({ v }: { v: number }) {
@@ -302,6 +302,7 @@ function NewDecorticageDialog({ open, onClose }: { open: boolean; onClose: () =>
     sacs: 0, poidsPaddy: 0, th: 13,
     lg1x: 0, casse2x: 0, fb: 0,
     equipe: "Équipe A", puUsinage: tarifs.puDecorticageCharge,
+    qualite: "Blanc" as Qualite,
   });
   const [tranche, setTranche] = useState<"A" | "B" | "ecos">("A");
   const [prixFacture, setPrixFacture] = useState(tarifs.puDecorticageFactureA);
@@ -333,7 +334,7 @@ function NewDecorticageDialog({ open, onClose }: { open: boolean; onClose: () =>
     id: "", date: form.date, lotId: form.lotId || "—",
     sacs: form.sacs, poidsPaddy: form.poidsPaddy, th: form.th,
     lg1x: form.lg1x, casse2x: form.casse2x, fb: form.fb,
-    equipe: form.equipe, puUsinage: form.puUsinage,
+    equipe: form.equipe, puUsinage: form.puUsinage, qualite: form.qualite,
   });
 
   const montantFacture = tranche === "B" ? form.poidsPaddy * prixFacture : preview.rizBlanchi * prixFacture;
@@ -355,7 +356,7 @@ function NewDecorticageDialog({ open, onClose }: { open: boolean; onClose: () =>
       date: form.date, lotId: form.lotId,
       sacs: form.sacs, poidsPaddy: form.poidsPaddy, th: form.th,
       lg1x: form.lg1x, casse2x: form.casse2x, fb: form.fb,
-      equipe: form.equipe, puUsinage: form.puUsinage,
+      equipe: form.equipe, puUsinage: form.puUsinage, qualite: form.qualite,
     }, facturation);
     toast.success(
       facturation
@@ -411,6 +412,14 @@ function NewDecorticageDialog({ open, onClose }: { open: boolean; onClose: () =>
             <Field label="2X Cassé (kg)"><Input type="number" value={form.casse2x || ""} onChange={(e) => setForm({ ...form, casse2x: +e.target.value })} /></Field>
             <Field label="FB (kg)"><Input type="number" value={form.fb || ""} onChange={(e) => setForm({ ...form, fb: +e.target.value })} /></Field>
             <Field label="PU coût interne (F/kg)"><Input type="number" value={form.puUsinage} onChange={(e) => setForm({ ...form, puUsinage: +e.target.value })} /></Field>
+            <Field label="Qualité du riz blanchi">
+              <Select value={form.qualite} onValueChange={(v) => setForm({ ...form, qualite: v as Qualite })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {QUALITES.map((q) => <SelectItem key={q} value={q}>{q}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
           </div>
         </div>
 

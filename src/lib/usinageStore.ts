@@ -6,7 +6,8 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "./supabaseClient";
 
-export type Qualite = "Blanc premium" | "Blanc" | "Moyen blanc" | "Standard" | "Écart";
+export type Qualite = "Blanc" | "Moyen blanc" | "Rouge" | "Autre";
+export const QUALITES: Qualite[] = ["Blanc", "Moyen blanc", "Rouge", "Autre"];
 
 export type Decorticage = {
   id: string;
@@ -87,13 +88,8 @@ function nextId(prefix: string, list: { id: string }[]) {
   return `${prefix}-${String(list.length + 1).padStart(3, "0")}`;
 }
 
-function computeQualite(rendement: number, tauxCasse: number): Qualite {
-  if (rendement >= 70 && tauxCasse < 10) return "Blanc premium";
-  if (rendement >= 67 && tauxCasse < 14) return "Blanc";
-  if (rendement >= 63 && tauxCasse < 18) return "Moyen blanc";
-  if (rendement >= 58) return "Standard";
-  return "Écart";
-}
+// Qualité désormais saisie manuellement par l'opérateur (couleur/grade du riz blanchi).
+
 
 async function createFacturation(f: Facturation, date: string, lotId: string | null) {
   const id = `FACT-USI-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -139,15 +135,14 @@ function trieFromRow(r: any): TrieOptique {
 // ---------- Calcul local optimiste ----------
 
 export function mkDecorticage(
-  base: Omit<Decorticage, "id" | "rizBlanchi" | "sonPaille" | "rendement" | "tauxCasse" | "qualite" | "coutUsinage"> & { id?: string },
+  base: Omit<Decorticage, "id" | "rizBlanchi" | "sonPaille" | "rendement" | "tauxCasse" | "coutUsinage"> & { id?: string },
 ): Decorticage {
   const rizBlanchi = +(base.lg1x + base.casse2x + base.fb).toFixed(1);
   const sonPaille = +(base.poidsPaddy - rizBlanchi).toFixed(1);
   const rendement = base.poidsPaddy ? +((rizBlanchi / base.poidsPaddy) * 100).toFixed(1) : 0;
   const tauxCasse = rizBlanchi ? +((base.casse2x / rizBlanchi) * 100).toFixed(1) : 0;
-  const qualite = computeQualite(rendement, tauxCasse);
   const coutUsinage = Math.round(base.poidsPaddy * base.puUsinage);
-  return { ...base, id: base.id ?? "", rizBlanchi, sonPaille, rendement, tauxCasse, qualite, coutUsinage };
+  return { ...base, id: base.id ?? "", rizBlanchi, sonPaille, rendement, tauxCasse, coutUsinage };
 }
 
 export function mkCalibrage(
@@ -219,7 +214,7 @@ export const usinageActions = {
   todayISO,
 
   addDecorticage(
-    input: Omit<Decorticage, "id" | "rizBlanchi" | "sonPaille" | "rendement" | "tauxCasse" | "qualite" | "coutUsinage">,
+    input: Omit<Decorticage, "id" | "rizBlanchi" | "sonPaille" | "rendement" | "tauxCasse" | "coutUsinage">,
     facturation?: Facturation | null,
   ) {
     const id = nextId("DEC", state.decorticages);
@@ -306,4 +301,4 @@ export const usinageActions = {
   },
 };
 
-export { computeQualite };
+
