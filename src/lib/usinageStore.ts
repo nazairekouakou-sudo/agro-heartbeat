@@ -6,7 +6,8 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "./supabaseClient";
 
-export type Qualite = "Blanc premium" | "Blanc" | "Moyen blanc" | "Standard" | "Écart";
+export type Qualite = "Blanc" | "Moyen blanc" | "Rouge" | "Autre";
+export const QUALITES: Qualite[] = ["Blanc", "Moyen blanc", "Rouge", "Autre"];
 
 export type Decorticage = {
   id: string;
