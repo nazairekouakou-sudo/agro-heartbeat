@@ -101,7 +101,10 @@ function sortieRizFromRow(r: any): SortieRiz {
 function receptionFromRow(r: any): ReceptionRizExterne {
   return {
     id: r.id, date: r.date, entityType: r.entity_type, entityName: r.entity_name,
-    poids: Number(r.poids), statut: r.statut,
+    poids: Number(r.poids),
+    qualite: (r.qualite ?? "Blanc") as QualiteRizExterne,
+    destination: (r.destination ?? "Trieuse optique") as DestinationRizExterne,
+    statut: r.statut,
   };
 }
 
