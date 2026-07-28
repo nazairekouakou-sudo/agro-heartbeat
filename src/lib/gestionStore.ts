@@ -20,6 +20,12 @@ export type SortieRiz = {
 
 export type ReceptionRizExterneStatut = "recu" | "en_triage" | "trie";
 
+export type QualiteRizExterne = "Blanc" | "Moyen blanc" | "Rouge" | "Autre";
+export const QUALITES_RIZ_EXTERNE: QualiteRizExterne[] = ["Blanc", "Moyen blanc", "Rouge", "Autre"];
+
+export type DestinationRizExterne = "Calibrage" | "Trieuse optique" | "Vente";
+export const DESTINATIONS_RIZ_EXTERNE: DestinationRizExterne[] = ["Calibrage", "Trieuse optique", "Vente"];
+
 // Riz blanc déjà décortiqué, envoyé par un partenaire/prestataire
 // directement pour triage (sans passer par Paddy → Décorticage CAPI).
 // A son propre numéro de lot, distinct des lots paddy (appros).
@@ -29,6 +35,8 @@ export type ReceptionRizExterne = {
   entityType: Entity;
   entityName: string;
   poids: number;
+  qualite: QualiteRizExterne;
+  destination: DestinationRizExterne;
   statut: ReceptionRizExterneStatut;
 };
 
