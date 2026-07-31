@@ -16,7 +16,7 @@ export const Route = createFileRoute("/admin-import-ecos")({
   ),
 });
 
-const ECOS_URL = "https://wgrqtxtyywhrylutkifu.supabase.co";
+const ECOS_URL = "https://sukfelhltclucdsfrlot.supabase.co";
 const ECOS_KEY = "sb_publishable_f6Dc4h4QGIFMxfKI-UGXgg_kFYHVAz1";
 
 const BOUTIQUES_CAPI = [
