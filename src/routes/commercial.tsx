@@ -13,7 +13,9 @@ import { toast } from "sonner";
 import { useUsinage, type Decorticage } from "@/lib/usinageStore";
 import { usePaddy } from "@/lib/paddyStore";
 import { useGestion, gestionActions, type RizCategorie } from "@/lib/gestionStore";
-import { useCommercial, commercialActions, BOUTIQUES } from "@/lib/commercialStore";
+import { useCommercial, commercialActions, commercialCrud, BOUTIQUES } from "@/lib/commercialStore";
+import { gestionCrud } from "@/lib/gestionStore";
+import { RowActions } from "@/components/RowActions";
 import { useTarifs, prixParCategorie } from "@/lib/tarifsStore";
 
 export const Route = createFileRoute("/commercial")({
@@ -121,10 +123,25 @@ function CommercialPage() {
               </Button>
             </div>
             <DataTable
-              columns={["Id commande", "Date", "N° Lot", "Désignation", "Quantité (kg)", "Prix de vente", "Boutique"]}
+              columns={["Id commande", "Date", "N° Lot", "Désignation", "Quantité (kg)", "Prix de vente", "Boutique", ""]}
               rows={sortiesRiz.map((s) => [
                 s.commandeId ?? s.id, fmtDate(s.date), s.lotId, s.categorie,
                 s.quantite.toLocaleString("fr-FR"), `${s.prixVente}`, s.boutique ?? "—",
+                <RowActions
+                  key={`act-${s.id}`}
+                  label={s.commandeId ?? s.id}
+                  values={s as unknown as Record<string, unknown>}
+                  fields={[
+                    { key: "date", label: "Date", type: "date" },
+                    { key: "commandeId", label: "Id commande" },
+                    { key: "categorie", label: "Désignation", type: "select", options: ["Long grain", "2X Cassé", "Fine Brisure"] },
+                    { key: "quantite", label: "Quantité (kg)", type: "number" },
+                    { key: "prixVente", label: "Prix de vente (FCFA/kg)", type: "number" },
+                    { key: "boutique", label: "Boutique", type: "select", options: BOUTIQUES },
+                  ]}
+                  onSave={(patch) => gestionCrud.updateSortieRiz(s.id, patch)}
+                  onDelete={() => gestionCrud.removeSortieRiz(s.id)}
+                />,
               ])}
             />
           </div>
@@ -146,14 +163,30 @@ function CommercialPage() {
                 <div key={key}>
                   <h3 className="font-display text-lg mb-2">Boutique {key}</h3>
                   <DataTable
-                    columns={["Produit", "Stock initial", "Entrée", "Total", "Sortie", "Stock final", "Prix de vente", "Montant"]}
+                    columns={["Produit", "Stock initial", "Entrée", "Total", "Sortie", "Stock final", "Prix de vente", "Montant", ""]}
                     rows={[
                       ...rows.map((r) => [
                         r.produit, r.stockInitial.toLocaleString("fr-FR"), r.entree.toLocaleString("fr-FR"),
                         (r.stockInitial + r.entree).toLocaleString("fr-FR"), r.sortie.toLocaleString("fr-FR"),
                         r.stockFinal.toLocaleString("fr-FR"), r.prixVente, fcfa(r.montant),
+                        <RowActions
+                          key={`act-${r.id}`}
+                          label={r.id}
+                          values={r as unknown as Record<string, unknown>}
+                          fields={[
+                            { key: "date", label: "Date", type: "date" },
+                            { key: "boutique", label: "Boutique", type: "select", options: BOUTIQUES },
+                            { key: "produit", label: "Produit" },
+                            { key: "stockInitial", label: "Stock initial", type: "number" },
+                            { key: "entree", label: "Entrée", type: "number" },
+                            { key: "sortie", label: "Sortie", type: "number" },
+                            { key: "prixVente", label: "Prix de vente", type: "number" },
+                          ]}
+                          onSave={(patch) => commercialCrud.updateVente(r.id, patch)}
+                          onDelete={() => commercialCrud.removeVente(r.id)}
+                        />,
                       ]),
-                      ["Total", "—", "—", "—", "—", "—", "—", fcfa(total)],
+                      ["Total", "—", "—", "—", "—", "—", "—", fcfa(total), ""],
                     ]}
                   />
                 </div>
@@ -170,9 +203,23 @@ function CommercialPage() {
               </Button>
             </div>
             <DataTable
-              columns={["Date", "Boutique", "Montant versé", "Solde restant caisse", "Agent encaisseur"]}
+              columns={["Date", "Boutique", "Montant versé", "Solde restant caisse", "Agent encaisseur", ""]}
               rows={versements.map((v) => [
                 fmtDate(v.date), v.boutique, fcfa(v.montantVerse), fcfa(v.soldeRestant), v.agent,
+                <RowActions
+                  key={`act-${v.id}`}
+                  label={v.id}
+                  values={v as unknown as Record<string, unknown>}
+                  fields={[
+                    { key: "date", label: "Date", type: "date" },
+                    { key: "boutique", label: "Boutique", type: "select", options: BOUTIQUES },
+                    { key: "montantVerse", label: "Montant versé", type: "number" },
+                    { key: "soldeRestant", label: "Solde restant caisse", type: "number" },
+                    { key: "agent", label: "Agent encaisseur" },
+                  ]}
+                  onSave={(patch) => commercialCrud.updateVersement(v.id, patch)}
+                  onDelete={() => commercialCrud.removeVersement(v.id)}
+                />,
               ])}
             />
           </div>

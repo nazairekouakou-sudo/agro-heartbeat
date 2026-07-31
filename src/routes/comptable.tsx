@@ -11,6 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { usePaddy, type Appro } from "@/lib/paddyStore";
+import { comptableCrud } from "@/lib/comptableStore";
+import { commercialCrud } from "@/lib/commercialStore";
+import { RowActions } from "@/components/RowActions";
 import { useUsinage } from "@/lib/usinageStore";
 import { useCommercial } from "@/lib/commercialStore";
 import { useGestion, gestionActions } from "@/lib/gestionStore";
@@ -200,8 +203,24 @@ function ComptablePage() {
           <div>
             <h3 className="font-display text-lg mb-2">Encaissements & versements</h3>
             <DataTable
-              columns={["Date", "Origine", "Libellé", "Montant", "Caisse", "Agent"]}
-              rows={versements.map((v) => [fmtDate(v.date), `Boutique ${v.boutique}`, "Versement journalier", fcfa(v.montantVerse), "Caisse centrale", v.agent])}
+              columns={["Date", "Origine", "Libellé", "Montant", "Caisse", "Agent", ""]}
+              rows={versements.map((v) => [
+                fmtDate(v.date), `Boutique ${v.boutique}`, "Versement journalier", fcfa(v.montantVerse), "Caisse centrale", v.agent,
+                <RowActions
+                  key={`act-${v.id}`}
+                  label={v.id}
+                  values={v as unknown as Record<string, unknown>}
+                  fields={[
+                    { key: "date", label: "Date", type: "date" },
+                    { key: "boutique", label: "Boutique" },
+                    { key: "montantVerse", label: "Montant versé", type: "number" },
+                    { key: "soldeRestant", label: "Solde restant caisse", type: "number" },
+                    { key: "agent", label: "Agent" },
+                  ]}
+                  onSave={(patch) => commercialCrud.updateVersement(v.id, patch)}
+                  onDelete={() => commercialCrud.removeVersement(v.id)}
+                />,
+              ])}
             />
           </div>
         )}
@@ -229,8 +248,24 @@ function DepensesTab({ depenses, appros }: { depenses: ReturnType<typeof useComp
         <Button size="sm" onClick={() => setOpen(true)} className="gap-1.5"><Plus className="size-4" /> Nouvelle dépense</Button>
       </div>
       <DataTable
-        columns={["Date", "N° Lot", "Tiers", "Catégorie", "Libellé", "Montant"]}
-        rows={depenses.map((d) => [fmtDate(d.date), d.lotId ?? "—", d.tiers ?? "—", d.categorie, d.libelle, fcfa(d.montant)])}
+        columns={["Date", "N° Lot", "Tiers", "Catégorie", "Libellé", "Montant", ""]}
+        rows={depenses.map((d) => [
+          fmtDate(d.date), d.lotId ?? "—", d.tiers ?? "—", d.categorie, d.libelle, fcfa(d.montant),
+          <RowActions
+            key={`act-${d.id}`}
+            label={d.id}
+            values={d as unknown as Record<string, unknown>}
+            fields={[
+              { key: "date", label: "Date", type: "date" },
+              { key: "tiers", label: "Tiers" },
+              { key: "categorie", label: "Catégorie" },
+              { key: "libelle", label: "Libellé" },
+              { key: "montant", label: "Montant", type: "number" },
+            ]}
+            onSave={(patch) => comptableCrud.updateDepense(d.id, patch)}
+            onDelete={() => comptableCrud.removeDepense(d.id)}
+          />,
+        ])}
       />
       <NewDepenseDialog open={open} onClose={() => setOpen(false)} appros={appros} />
     </div>
@@ -296,7 +331,7 @@ function PretsTab({ prets, remboursements }: { prets: ReturnType<typeof useCompt
         <Button size="sm" onClick={() => setOpen(true)} className="gap-1.5"><Plus className="size-4" /> Nouveau prêt</Button>
       </div>
       <DataTable
-        columns={["Date", "Type", "Bénéficiaire", "Nature", "Montant initial", "Solde restant", ""]}
+        columns={["Date", "Type", "Bénéficiaire", "Nature", "Montant initial", "Solde restant", "", ""]}
         rows={prets.map((p) => [
           fmtDate(p.date), p.type === "personnel" ? "Personnel" : "Paysan", p.beneficiaire,
           p.nature === "espece" ? "Espèce" : `Nature (${p.unite ?? "—"})`,
@@ -305,6 +340,22 @@ function PretsTab({ prets, remboursements }: { prets: ReturnType<typeof useCompt
           p.nature === "espece" ? (
             <button key={p.id} onClick={() => setRembOpen(p.id)} className="h-7 px-2.5 rounded-md border border-border text-xs">Rembourser</button>
           ) : "",
+          <RowActions
+            key={`act-${p.id}`}
+            label={p.id}
+            values={p as unknown as Record<string, unknown>}
+            fields={[
+              { key: "date", label: "Date", type: "date" },
+              { key: "type", label: "Type", type: "select", options: ["personnel", "paysan"] },
+              { key: "beneficiaire", label: "Bénéficiaire" },
+              { key: "nature", label: "Nature", type: "select", options: ["espece", "nature"] },
+              { key: "unite", label: "Unité (si nature)" },
+              { key: "montantInitial", label: "Montant initial", type: "number" },
+              { key: "description", label: "Description" },
+            ]}
+            onSave={(patch) => comptableCrud.updatePret(p.id, patch)}
+            onDelete={() => comptableCrud.removePret(p.id)}
+          />,
         ])}
       />
       <NewPretDialog open={open} onClose={() => setOpen(false)} />
@@ -390,7 +441,7 @@ function PrestationsTab({ factures, encaissements, appros }: { factures: ReturnT
         <Button size="sm" onClick={() => setOpen(true)} className="gap-1.5"><Plus className="size-4" /> Nouvelle facture</Button>
       </div>
       <DataTable
-        columns={["Date", "N° Lot", "Tiers", "Prestation", "Montant facturé", "Encaissé", "Solde", ""]}
+        columns={["Date", "N° Lot", "Tiers", "Prestation", "Montant facturé", "Encaissé", "Solde", "", ""]}
         rows={factures.map((f) => {
           const enc = encaisse(f.id);
           const solde = f.montantFacture - enc;
@@ -398,6 +449,21 @@ function PrestationsTab({ factures, encaissements, appros }: { factures: ReturnT
             fmtDate(f.date), f.lotId ?? "—", f.tiers, f.typePrestation, fcfa(f.montantFacture), fcfa(enc),
             <Statut key={f.id} k={solde <= 0 ? "Soldé" : enc > 0 ? "Partiel" : "Impayé"} tone={solde <= 0 ? "ok" : enc > 0 ? "warn" : "bad"} />,
             solde > 0 ? <button key={`b-${f.id}`} onClick={() => setEncOpen(f.id)} className="h-7 px-2.5 rounded-md border border-border text-xs">Encaisser</button> : "",
+            <RowActions
+              key={`act-${f.id}`}
+              label={f.id}
+              values={f as unknown as Record<string, unknown>}
+              fields={[
+                { key: "date", label: "Date", type: "date" },
+                { key: "lotId", label: "N° Lot" },
+                { key: "tiers", label: "Tiers" },
+                { key: "typePrestation", label: "Prestation", type: "select", options: ["sechage", "usinage", "triage", "autre"] },
+                { key: "montantFacture", label: "Montant facturé", type: "number" },
+                { key: "echeance", label: "Échéance", type: "date" },
+              ]}
+              onSave={(patch) => comptableCrud.updateFacture(f.id, patch)}
+              onDelete={() => comptableCrud.removeFacture(f.id)}
+            />,
           ];
         })}
       />

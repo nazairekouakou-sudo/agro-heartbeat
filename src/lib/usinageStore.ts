@@ -4,6 +4,7 @@
 // facturation (facturé au partenaire/prestataire propriétaire du lot,
 // via une entrée automatique dans prestations_factures).
 import { useEffect, useSyncExternalStore } from "react";
+import { toRow } from "./rowMap";
 import { supabase } from "./supabaseClient";
 
 export type Qualite = "Blanc" | "Moyen blanc" | "Rouge" | "Autre";
@@ -302,3 +303,44 @@ export const usinageActions = {
 };
 
 
+
+// ---------- Modification / suppression ----------
+
+const DEC_COLS: Partial<Record<keyof Decorticage, string>> = {
+  date: "date", lotId: "lot_id", sacs: "sacs", poidsPaddy: "poids_paddy", th: "th",
+  lg1x: "lg1x", casse2x: "casse2x", fb: "fb", qualite: "qualite", equipe: "equipe",
+  puUsinage: "pu_usinage",
+};
+
+const CAL_COLS: Partial<Record<keyof Calibrage, string>> = {
+  date: "date", lotId: "lot_id", decorticageId: "decorticage_id",
+  poidsAvant: "poids_avant", poidsApres: "poids_apres", equipe: "equipe",
+  puCalibrage: "pu_calibrage",
+};
+
+const TRIE_COLS: Partial<Record<keyof TrieOptique, string>> = {
+  date: "date", lotId: "lot_id", lotSource: "lot_source", decorticageId: "decorticage_id",
+  rizEntree: "riz_entree", rizApres: "riz_apres", residus: "residus", agent: "agent",
+  puTriage: "pu_triage",
+};
+
+async function usinageMutate(table: string, id: string, row: Record<string, unknown>) {
+  const { error } = await supabase.from(table).update(row).eq("id", id);
+  if (error) throw error;
+  await refetchAll();
+}
+
+async function usinageRemove(table: string, id: string) {
+  const { error } = await supabase.from(table).delete().eq("id", id);
+  if (error) throw error;
+  await refetchAll();
+}
+
+export const usinageCrud = {
+  updateDecorticage: (id: string, patch: Partial<Decorticage>) => usinageMutate("decorticages", id, toRow(patch, DEC_COLS)),
+  removeDecorticage: (id: string) => usinageRemove("decorticages", id),
+  updateCalibrage: (id: string, patch: Partial<Calibrage>) => usinageMutate("calibrages", id, toRow(patch, CAL_COLS)),
+  removeCalibrage: (id: string) => usinageRemove("calibrages", id),
+  updateTrie: (id: string, patch: Partial<TrieOptique>) => usinageMutate("tries", id, toRow(patch, TRIE_COLS)),
+  removeTrie: (id: string) => usinageRemove("tries", id),
+};
