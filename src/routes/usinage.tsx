@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { usePaddy, reliquat, type Appro } from "@/lib/paddyStore";
+import { usinageCrud, QUALITES } from "@/lib/usinageStore";
+import { RowActions } from "@/components/RowActions";
 import { useGestion, gestionActions, type ReceptionRizExterne } from "@/lib/gestionStore";
 import { useTarifs } from "@/lib/tarifsStore";
 import {
@@ -114,7 +116,7 @@ function UsinagePage() {
 
         {tab === "decorticage" && (
           <DataTable
-            columns={["Date", "N° Lot", "Sacs", "Paddy (kg)", "TH", "Riz blanc", "2X Cassé", "FB", "Riz blanchi", "Rendement", "Taux cassé", "Qualité", "Équipe"]}
+            columns={["Date", "N° Lot", "Sacs", "Paddy (kg)", "TH", "Riz blanc", "2X Cassé", "FB", "Riz blanchi", "Rendement", "Taux cassé", "Qualité", "Équipe", ""]}
             rows={filteredDec.map((d) => [
               fmtDate(d.date), d.lotId, d.sacs,
               d.poidsPaddy.toLocaleString("fr-FR"),
@@ -127,25 +129,58 @@ function UsinagePage() {
               `${d.tauxCasse}%`,
               <QualiteBadge q={d.qualite} />,
               d.equipe,
+              <RowActions
+                key={`act-${d.id}`}
+                label={d.id}
+                values={d as unknown as Record<string, unknown>}
+                fields={[
+                  { key: "date", label: "Date", type: "date" },
+                  { key: "sacs", label: "Sacs", type: "number" },
+                  { key: "poidsPaddy", label: "Paddy (kg)", type: "number" },
+                  { key: "th", label: "TH (%)", type: "number" },
+                  { key: "lg1x", label: "Riz blanc LG+1X (kg)", type: "number" },
+                  { key: "casse2x", label: "2X Cassé (kg)", type: "number" },
+                  { key: "fb", label: "Fine brisure (kg)", type: "number" },
+                  { key: "qualite", label: "Qualité", type: "select", options: QUALITES },
+                  { key: "puUsinage", label: "PU usinage", type: "number" },
+                  { key: "equipe", label: "Équipe" },
+                ]}
+                onSave={(patch) => usinageCrud.updateDecorticage(d.id, patch)}
+                onDelete={() => usinageCrud.removeDecorticage(d.id)}
+              />,
             ])}
             empty="Aucune opération de décorticage."
           />
         )}
         {tab === "calibrage" && (
           <DataTable
-            columns={["Date", "N° Lot", "Décorticage", "Riz avant (kg)", "Riz après (kg)", "Perte", "PU calibrage", "Coût", "Équipe"]}
+            columns={["Date", "N° Lot", "Décorticage", "Riz avant (kg)", "Riz après (kg)", "Perte", "PU calibrage", "Coût", "Équipe", ""]}
             rows={filteredCal.map((c) => [
               fmtDate(c.date), c.lotId, c.decorticageId,
               c.poidsAvant.toLocaleString("fr-FR"), c.poidsApres.toLocaleString("fr-FR"),
               <span className={c.perte > 0 ? "text-destructive" : ""}>{c.perte.toLocaleString("fr-FR")} kg</span>,
               `${c.puCalibrage} F/kg`, fcfa(c.coutCalibrage), c.equipe,
+              <RowActions
+                key={`act-${c.id}`}
+                label={c.id}
+                values={c as unknown as Record<string, unknown>}
+                fields={[
+                  { key: "date", label: "Date", type: "date" },
+                  { key: "poidsAvant", label: "Riz avant (kg)", type: "number" },
+                  { key: "poidsApres", label: "Riz après (kg)", type: "number" },
+                  { key: "puCalibrage", label: "PU calibrage", type: "number" },
+                  { key: "equipe", label: "Équipe" },
+                ]}
+                onSave={(patch) => usinageCrud.updateCalibrage(c.id, patch)}
+                onDelete={() => usinageCrud.removeCalibrage(c.id)}
+              />,
             ])}
             empty="Aucune opération de calibrage."
           />
         )}
         {tab === "trie" && (
           <DataTable
-            columns={["Date", "N° Lot", "Riz (kg)", "Après trie", "Résidus", "Écart", "Taux résidus", "Récupération", "Agent"]}
+            columns={["Date", "N° Lot", "Riz (kg)", "Après trie", "Résidus", "Écart", "Taux résidus", "Récupération", "Agent", ""]}
             rows={filteredTrie.map((t) => [
               fmtDate(t.date), t.lotId,
               t.rizEntree.toLocaleString("fr-FR"),
@@ -155,6 +190,21 @@ function UsinagePage() {
               `${t.tauxResidus}%`,
               `${t.tauxRecuperation}%`,
               t.agent,
+              <RowActions
+                key={`act-${t.id}`}
+                label={t.id}
+                values={t as unknown as Record<string, unknown>}
+                fields={[
+                  { key: "date", label: "Date", type: "date" },
+                  { key: "rizEntree", label: "Riz entrée (kg)", type: "number" },
+                  { key: "rizApres", label: "Riz après trie (kg)", type: "number" },
+                  { key: "residus", label: "Résidus (kg)", type: "number" },
+                  { key: "puTriage", label: "PU triage", type: "number" },
+                  { key: "agent", label: "Agent" },
+                ]}
+                onSave={(patch) => usinageCrud.updateTrie(t.id, patch)}
+                onDelete={() => usinageCrud.removeTrie(t.id)}
+              />,
             ])}
             empty="Aucun trie enregistré."
           />
