@@ -43,23 +43,26 @@ function ImportEcosPage() {
 
   useEffect(() => {
     const ecos = createClient(ECOS_URL, ECOS_KEY);
-    ecos
-      .from("shops")
-      .select("id, name, seller_name")
-      .then(({ data, error }) => {
+    (async () => {
+      try {
+        const { data, error } = await ecos.from("shops").select("id, name, seller_name");
         if (error) {
           log(`Erreur de connexion à ECOS : ${error.message}`, "error");
         } else if (data) {
           setShops(data);
-          // Pré-association naïve par ordre, à ajuster manuellement
           const initial: Record<string, string> = {};
           data.forEach((s, i) => {
             if (BOUTIQUES_CAPI[i]) initial[s.id] = BOUTIQUES_CAPI[i].id;
           });
           setMapping(initial);
+          log(`${data.length} boutique(s) trouvée(s) côté ECOS.`, "ok");
         }
+      } catch (e) {
+        log(`Échec réseau vers ECOS : ${String(e)}`, "error");
+      } finally {
         setLoadingShops(false);
-      });
+      }
+    })();
   }, []);
 
   async function runImport() {
