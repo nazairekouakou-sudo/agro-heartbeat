@@ -1,6 +1,7 @@
 // Store Service Comptable — dépenses, prêts, facturation de prestations.
 // Persisté sur Supabase, synchronisé en temps réel.
 import { useEffect, useSyncExternalStore } from "react";
+import { toRow } from "./rowMap";
 import { supabase } from "./supabaseClient";
 
 export type Depense = {
@@ -263,4 +264,54 @@ export const comptableActions = {
       });
     return id;
   },
+};
+
+// ---------- Modification / suppression ----------
+
+const DEP_COLS: Partial<Record<keyof Depense, string>> = {
+  date: "date", lotId: "lot_id", tiers: "tiers", categorie: "categorie",
+  libelle: "libelle", montant: "montant",
+};
+
+const PRET_COLS: Partial<Record<keyof Pret, string>> = {
+  date: "date", type: "type", beneficiaire: "beneficiaire", nature: "nature",
+  unite: "unite", montantInitial: "montant_initial", description: "description",
+};
+
+const REMB_COLS: Partial<Record<keyof PretRemboursement, string>> = {
+  pretId: "pret_id", date: "date", montant: "montant",
+};
+
+const FACT_COLS: Partial<Record<keyof PrestationFacture, string>> = {
+  date: "date", lotId: "lot_id", tiers: "tiers", typePrestation: "type_prestation",
+  montantFacture: "montant_facture", echeance: "echeance",
+};
+
+const ENC_COLS: Partial<Record<keyof PrestationEncaissement, string>> = {
+  factureId: "facture_id", date: "date", montant: "montant",
+};
+
+async function comptableMutate(table: string, id: string, row: Record<string, unknown>) {
+  const { error } = await supabase.from(table).update(row).eq("id", id);
+  if (error) throw error;
+  await refetchAll();
+}
+
+async function comptableRemove(table: string, id: string) {
+  const { error } = await supabase.from(table).delete().eq("id", id);
+  if (error) throw error;
+  await refetchAll();
+}
+
+export const comptableCrud = {
+  updateDepense: (id: string, patch: Partial<Depense>) => comptableMutate("depenses", id, toRow(patch, DEP_COLS)),
+  removeDepense: (id: string) => comptableRemove("depenses", id),
+  updatePret: (id: string, patch: Partial<Pret>) => comptableMutate("prets", id, toRow(patch, PRET_COLS)),
+  removePret: (id: string) => comptableRemove("prets", id),
+  updateRemboursement: (id: string, patch: Partial<PretRemboursement>) => comptableMutate("pret_remboursements", id, toRow(patch, REMB_COLS)),
+  removeRemboursement: (id: string) => comptableRemove("pret_remboursements", id),
+  updateFacture: (id: string, patch: Partial<PrestationFacture>) => comptableMutate("prestations_factures", id, toRow(patch, FACT_COLS)),
+  removeFacture: (id: string) => comptableRemove("prestations_factures", id),
+  updateEncaissement: (id: string, patch: Partial<PrestationEncaissement>) => comptableMutate("prestation_encaissements", id, toRow(patch, ENC_COLS)),
+  removeEncaissement: (id: string) => comptableRemove("prestation_encaissements", id),
 };

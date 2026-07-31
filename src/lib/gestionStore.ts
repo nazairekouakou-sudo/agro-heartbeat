@@ -1,6 +1,7 @@
 // Store Service Gestion — sorties riz blanchi, réceptions riz externe,
 // file de validations. Persisté sur Supabase, synchronisé en temps réel.
 import { useEffect, useSyncExternalStore } from "react";
+import { toRow } from "./rowMap";
 import { supabase } from "./supabaseClient";
 import type { Entity } from "./paddyStore";
 
@@ -270,4 +271,37 @@ export const gestionActions = {
       refetchAll();
     }
   },
+};
+
+// ---------- Modification / suppression ----------
+
+const SORTIE_RIZ_COLS: Partial<Record<keyof SortieRiz, string>> = {
+  date: "date", commandeId: "commande_id", lotId: "lot_id", categorie: "categorie",
+  quantite: "quantite", prixVente: "prix_vente", boutique: "boutique",
+};
+
+const RECEPTION_COLS: Partial<Record<keyof ReceptionRizExterne, string>> = {
+  date: "date", entityType: "entity_type", entityName: "entity_name", poids: "poids",
+  variete: "variete", destination: "destination", statut: "statut",
+};
+
+async function gestionMutate(table: string, id: string, row: Record<string, unknown>) {
+  const { error } = await supabase.from(table).update(row).eq("id", id);
+  if (error) throw error;
+  await refetchAll();
+}
+
+async function gestionRemove(table: string, id: string) {
+  const { error } = await supabase.from(table).delete().eq("id", id);
+  if (error) throw error;
+  await refetchAll();
+}
+
+export const gestionCrud = {
+  updateSortieRiz: (id: string, patch: Partial<SortieRiz>) => gestionMutate("sorties_riz", id, toRow(patch, SORTIE_RIZ_COLS)),
+  removeSortieRiz: (id: string) => gestionRemove("sorties_riz", id),
+  updateReceptionExterne: (id: string, patch: Partial<ReceptionRizExterne>) => gestionMutate("receptions_riz_externe", id, toRow(patch, RECEPTION_COLS)),
+  removeReceptionExterne: (id: string) => gestionRemove("receptions_riz_externe", id),
+  updateValidation: (id: string, patch: { ref?: string; service?: string; montant?: string }) => gestionMutate("validations", id, patch),
+  removeValidation: (id: string) => gestionRemove("validations", id),
 };

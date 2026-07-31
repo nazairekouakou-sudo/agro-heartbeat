@@ -2,6 +2,7 @@
 // Les "commandes" réutilisent la table sorties_riz de Gestion (voir gestionStore.ts).
 // Persisté sur Supabase, synchronisé en temps réel.
 import { useEffect, useSyncExternalStore } from "react";
+import { toRow } from "./rowMap";
 import { supabase } from "./supabaseClient";
 
 export const BOUTIQUES = ["Dakar Centre", "St-Louis", "Thiès", "Louga"] as const;
@@ -169,4 +170,35 @@ export const commercialActions = {
 
     return id;
   },
+};
+
+// ---------- Modification / suppression ----------
+
+const VENTE_COLS: Partial<Record<keyof VenteBoutique, string>> = {
+  date: "date", boutique: "boutique", produit: "produit", stockInitial: "stock_initial",
+  entree: "entree", sortie: "sortie", prixVente: "prix_vente",
+};
+
+const VERS_COLS: Partial<Record<keyof VersementCaisse, string>> = {
+  date: "date", boutique: "boutique", montantVerse: "montant_verse",
+  soldeRestant: "solde_restant", agent: "agent",
+};
+
+async function commercialMutate(table: string, id: string, row: Record<string, unknown>) {
+  const { error } = await supabase.from(table).update(row).eq("id", id);
+  if (error) throw error;
+  await refetchAll();
+}
+
+async function commercialRemove(table: string, id: string) {
+  const { error } = await supabase.from(table).delete().eq("id", id);
+  if (error) throw error;
+  await refetchAll();
+}
+
+export const commercialCrud = {
+  updateVente: (id: string, patch: Partial<VenteBoutique>) => commercialMutate("ventes_boutique", id, toRow(patch, VENTE_COLS)),
+  removeVente: (id: string) => commercialRemove("ventes_boutique", id),
+  updateVersement: (id: string, patch: Partial<VersementCaisse>) => commercialMutate("versements_caisse", id, toRow(patch, VERS_COLS)),
+  removeVersement: (id: string) => commercialRemove("versements_caisse", id),
 };
