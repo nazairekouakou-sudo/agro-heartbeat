@@ -12,7 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { usePaddy, paddyActions, reliquat, type Entity, type LotStatus } from "@/lib/paddyStore";
+import { usePaddy, paddyActions, paddyCrud, reliquat, type Entity, type LotStatus } from "@/lib/paddyStore";
+import { useVarieteNoms } from "@/lib/varietesStore";
+import { RowActions } from "@/components/RowActions";
 import { useUsinage } from "@/lib/usinageStore";
 import { useTarifs } from "@/lib/tarifsStore";
 
@@ -40,6 +42,7 @@ function PaddyPage() {
   const [openNew, setOpenNew] = useState<null | "appro" | "sechage" | "sortie">(null);
   const [detailLot, setDetailLot] = useState<string | null>(null);
   const { appros, sechages, sorties } = usePaddy();
+  const varieteNoms = useVarieteNoms();
 
   const filteredAppros = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -291,6 +294,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const varieteNoms = useVarieteNoms();
   const nextId = paddyActions.nextLotId();
   const [form, setForm] = useState({
     dateEntree: paddyActions.todayISO(),
