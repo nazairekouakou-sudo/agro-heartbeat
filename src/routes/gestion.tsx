@@ -12,7 +12,10 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { usePaddy, reliquat, type Appro, type LotStatus } from "@/lib/paddyStore";
 import { useUsinage, type Decorticage } from "@/lib/usinageStore";
-import { useGestion, gestionActions, type RizCategorie, type QualiteRizExterne, type DestinationRizExterne, QUALITES_RIZ_EXTERNE, DESTINATIONS_RIZ_EXTERNE } from "@/lib/gestionStore";
+import { useGestion, gestionActions, gestionCrud, type RizCategorie, type DestinationRizExterne, DESTINATIONS_RIZ_EXTERNE } from "@/lib/gestionStore";
+import { paddyCrud } from "@/lib/paddyStore";
+import { useVarieteNoms } from "@/lib/varietesStore";
+import { RowActions } from "@/components/RowActions";
 import { useAuth } from "@/lib/authStore";
 import { useTarifs, prixParCategorie } from "@/lib/tarifsStore";
 
@@ -67,6 +70,7 @@ function GestionPage() {
   const { appros, sechages, sorties } = usePaddy();
   const { decorticages, tries } = useUsinage();
   const { sortiesRiz, receptionsExternes, validations } = useGestion();
+  const varieteNoms = useVarieteNoms();
 
   // ---------- Stock paddy : dérivé des données Paddy ----------
   const stockPaddyTonnes = useMemo(
@@ -151,7 +155,7 @@ function GestionPage() {
 
         {tab === "stock-paddy" && (
           <DataTable
-            columns={["N° Lot", "Zone", "Entité", "Variété", "TH", "Sacs", "Poids (kg)", "Reliquat", "Statut", "Dernière opération"]}
+            columns={["N° Lot", "Zone", "Entité", "Variété", "TH", "Sacs", "Poids (kg)", "Reliquat", "Statut", "Dernière opération", ""]}
             rows={appros.map((a) => {
               const r = reliquat(a, sorties, decorticages);
               return [
@@ -159,6 +163,22 @@ function GestionPage() {
                 `${r.sacs} sac${r.sacs > 1 ? "s" : ""}${r.poids !== null ? ` · ${kg(r.poids)} kg` : ""}`,
                 <StatusPill key={a.id} k={a.status} tone={statusTone(a.status)} />,
                 derniereOperation(a),
+                <RowActions
+                  key={`act-${a.id}`}
+                  label={a.id}
+                  values={a as unknown as Record<string, unknown>}
+                  fields={[
+                    { key: "zone", label: "Zone" },
+                    { key: "entityName", label: "Entité" },
+                    { key: "variete", label: "Variété", type: "select", options: varieteNoms },
+                    { key: "th", label: "TH (%)", type: "number" },
+                    { key: "sacs", label: "Sacs", type: "number" },
+                    { key: "poids", label: "Poids (kg)", type: "number" },
+                    { key: "status", label: "Statut", type: "select", options: ["Collecte", "En séchage", "Stocké", "Envoyé usinage", "Sortie tiers"] },
+                  ]}
+                  onSave={(patch) => paddyCrud.updateAppro(a.id, patch)}
+                  onDelete={() => paddyCrud.removeAppro(a.id)}
+                />,
               ];
             })}
           />
@@ -185,13 +205,28 @@ function GestionPage() {
               </p>
             )}
             <DataTable
-              columns={["N° Lot", "Date", "Origine", "Entité", "Poids (kg)", "Qualité", "Destination", "Statut"]}
+              columns={["N° Lot", "Date", "Origine", "Entité", "Poids (kg)", "Variété", "Destination", "Statut", ""]}
               rows={receptionsExternes.map((r) => [
-                r.id, fmtDate(r.date), r.entityType, r.entityName, kg(r.poids), r.qualite, r.destination,
+                r.id, fmtDate(r.date), r.entityType, r.entityName, kg(r.poids), r.variete, r.destination,
                 <StatusPill
                   key={r.id}
                   k={r.statut === "trie" ? "Trié" : r.statut === "en_triage" ? "En triage" : "Reçu"}
                   tone={r.statut === "trie" ? "ok" : r.statut === "en_triage" ? "warn" : "muted"}
+                />,
+                <RowActions
+                  key={`act-${r.id}`}
+                  label={r.id}
+                  values={r as unknown as Record<string, unknown>}
+                  fields={[
+                    { key: "date", label: "Date", type: "date" },
+                    { key: "entityName", label: "Entité" },
+                    { key: "poids", label: "Poids (kg)", type: "number" },
+                    { key: "variete", label: "Variété", type: "select", options: varieteNoms },
+                    { key: "destination", label: "Destination", type: "select", options: DESTINATIONS_RIZ_EXTERNE },
+                    { key: "statut", label: "Statut", type: "select", options: ["recu", "en_triage", "trie"] },
+                  ]}
+                  onSave={(patch) => gestionCrud.updateReceptionExterne(r.id, patch)}
+                  onDelete={() => gestionCrud.removeReceptionExterne(r.id)}
                 />,
               ])}
             />
@@ -206,9 +241,23 @@ function GestionPage() {
               </Button>
             </div>
             <DataTable
-              columns={["Date", "Id commande", "N° Lot", "Qualité", "Quantité (kg)", "Prix de vente"]}
+              columns={["Date", "Id commande", "N° Lot", "Qualité", "Quantité (kg)", "Prix de vente", ""]}
               rows={sortiesRiz.map((s) => [
                 fmtDate(s.date), s.commandeId ?? "—", s.lotId, s.categorie, kg(s.quantite), `${s.prixVente} FCFA/kg`,
+                <RowActions
+                  key={`act-${s.id}`}
+                  label={s.id}
+                  values={s as unknown as Record<string, unknown>}
+                  fields={[
+                    { key: "date", label: "Date", type: "date" },
+                    { key: "commandeId", label: "Id commande" },
+                    { key: "categorie", label: "Qualité", type: "select", options: rizCategories },
+                    { key: "quantite", label: "Quantité (kg)", type: "number" },
+                    { key: "prixVente", label: "Prix de vente (FCFA/kg)", type: "number" },
+                  ]}
+                  onSave={(patch) => gestionCrud.updateSortieRiz(s.id, patch)}
+                  onDelete={() => gestionCrud.removeSortieRiz(s.id)}
+                />,
               ])}
             />
           </div>
@@ -267,6 +316,17 @@ function GestionPage() {
                 ) : (
                   <span className="text-[11px] text-muted-foreground w-20 text-right capitalize">{v.status}</span>
                 )}
+                <RowActions
+                  label={v.ref}
+                  values={{ ref: v.ref, service: v.service, montant: v.montant }}
+                  fields={[
+                    { key: "ref", label: "Référence" },
+                    { key: "service", label: "Service" },
+                    { key: "montant", label: "Montant" },
+                  ]}
+                  onSave={(patch) => gestionCrud.updateValidation(v.id, patch as { ref?: string; service?: string; montant?: string })}
+                  onDelete={() => gestionCrud.removeValidation(v.id)}
+                />
               </div>
             ))}
           </div>
@@ -385,12 +445,13 @@ function NewSortieRizDialog({
 }
 
 function NewReceptionExterneDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const varieteNoms = useVarieteNoms();
   const [form, setForm] = useState({
     date: gestionActions.todayISO(),
     entityType: "Partenaire" as Appro["entity"],
     entityName: "",
     poids: 0,
-    qualite: "Blanc" as QualiteRizExterne,
+    variete: "",
     destination: "Trieuse optique" as DestinationRizExterne,
   });
 
@@ -401,7 +462,7 @@ function NewReceptionExterneDialog({ open, onClose }: { open: boolean; onClose: 
     }
     const id = gestionActions.addReceptionExterne({
       date: form.date, entityType: form.entityType, entityName: form.entityName.trim(),
-      poids: form.poids, qualite: form.qualite, destination: form.destination,
+      poids: form.poids, variete: form.variete || varieteNoms[0], destination: form.destination,
     });
     toast.success(`Réception ${id} enregistrée. Destination : ${form.destination}.`);
     onClose();
@@ -414,7 +475,7 @@ function NewReceptionExterneDialog({ open, onClose }: { open: boolean; onClose: 
           <DialogTitle className="font-display">Nouvelle réception riz blanc externe</DialogTitle>
         </DialogHeader>
         <p className="text-xs text-muted-foreground -mt-2">
-          Riz déjà décortiqué, envoyé par un partenaire ou prestataire. Précisez la qualité et l'opération de destination.
+          Riz déjà décortiqué, envoyé par un partenaire ou prestataire. Précisez la variété et l'opération de destination.
         </p>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Date">
@@ -437,12 +498,12 @@ function NewReceptionExterneDialog({ open, onClose }: { open: boolean; onClose: 
           <Field label="Poids reçu (kg)">
             <Input type="number" value={form.poids || ""} onChange={(e) => setForm({ ...form, poids: Number(e.target.value) })} />
           </Field>
-          <Field label="Qualité du riz">
-            <Select value={form.qualite} onValueChange={(v) => setForm({ ...form, qualite: v as QualiteRizExterne })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+          <Field label="Variété de riz">
+            <Select value={form.variete || varieteNoms[0]} onValueChange={(v) => setForm({ ...form, variete: v })}>
+              <SelectTrigger><SelectValue placeholder="Choisir une variété" /></SelectTrigger>
               <SelectContent>
-                {QUALITES_RIZ_EXTERNE.map((q) => (
-                  <SelectItem key={q} value={q}>{q}</SelectItem>
+                {varieteNoms.map((v) => (
+                  <SelectItem key={v} value={v}>{v}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
