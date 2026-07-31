@@ -103,7 +103,7 @@ function PaddyPage() {
 
         {tab === "appro" && (
           <DataTable
-            columns={["N° Lot", "Date entrée", "Zone", "Entité", "Fournisseur", "Variété", "TH", "TI", "Sacs", "Poids (kg)", "PM", "Statut", "Agent"]}
+            columns={["N° Lot", "Date entrée", "Zone", "Entité", "Fournisseur", "Variété", "TH", "TI", "Sacs", "Poids (kg)", "PM", "Statut", "Agent", ""]}
             rows={filteredAppros.map((a) => [
               <button className="text-primary hover:underline font-medium" onClick={() => setDetailLot(a.id)}>{a.id}</button>,
               fmtDate(a.dateEntree),
@@ -118,6 +118,28 @@ function PaddyPage() {
               a.pm,
               <StatusBadge s={a.status} />,
               a.agent,
+              <RowActions
+                key={`act-${a.id}`}
+                label={a.id}
+                values={a as unknown as Record<string, unknown>}
+                fields={[
+                  { key: "dateEntree", label: "Date entrée", type: "date" },
+                  { key: "zone", label: "Zone" },
+                  { key: "entityName", label: "Entité" },
+                  { key: "fournisseur", label: "Fournisseur" },
+                  { key: "variete", label: "Variété", type: "select", options: varieteNoms },
+                  { key: "th", label: "TH (%)", type: "number" },
+                  { key: "ti", label: "TI (%)", type: "number" },
+                  { key: "sacs", label: "Sacs", type: "number" },
+                  { key: "poids", label: "Poids (kg)", type: "number" },
+                  { key: "pu", label: "PU (F/kg)", type: "number" },
+                  { key: "prime", label: "Prime", type: "number" },
+                  { key: "agent", label: "Agent" },
+                  { key: "status", label: "Statut", type: "select", options: ["Collecte", "En séchage", "Stocké", "Envoyé usinage", "Sortie tiers"] },
+                ]}
+                onSave={(patch) => paddyCrud.updateAppro(a.id, patch)}
+                onDelete={() => paddyCrud.removeAppro(a.id)}
+              />,
             ])}
             empty="Aucun lot correspondant."
           />
@@ -125,7 +147,7 @@ function PaddyPage() {
 
         {tab === "sechage" && (
           <DataTable
-            columns={["Date", "N° Lot", "TH init.", "Sacs", "Poids avant", "Jours", "TH après", "Poids après", "Variation", "Agent"]}
+            columns={["Date", "N° Lot", "TH init.", "Sacs", "Poids avant", "Jours", "TH après", "Poids après", "Variation", "Agent", ""]}
             rows={sechages.map((s) => [
               fmtDate(s.date),
               <button className="text-primary hover:underline" onClick={() => setDetailLot(s.lotId)}>{s.lotId}</button>,
@@ -133,17 +155,53 @@ function PaddyPage() {
               s.jours, `${s.thApres}%`, s.poidsApres.toLocaleString("fr-FR"),
               <span className={s.variation < 0 ? "text-destructive" : ""}>{s.variation}</span>,
               s.agent,
+              <RowActions
+                key={`act-${s.id}`}
+                label={s.id}
+                values={s as unknown as Record<string, unknown>}
+                fields={[
+                  { key: "date", label: "Date", type: "date" },
+                  { key: "thInitial", label: "TH initial (%)", type: "number" },
+                  { key: "sacs", label: "Sacs", type: "number" },
+                  { key: "poidsAvant", label: "Poids avant (kg)", type: "number" },
+                  { key: "jours", label: "Jours", type: "number" },
+                  { key: "thApres", label: "TH après (%)", type: "number" },
+                  { key: "poidsApres", label: "Poids après (kg)", type: "number" },
+                  { key: "puSechage", label: "PU séchage / sac", type: "number" },
+                  { key: "agent", label: "Agent" },
+                ]}
+                onSave={(patch) => paddyCrud.updateSechage(s.id, patch)}
+                onDelete={() => paddyCrud.removeSechage(s.id)}
+              />,
             ])}
           />
         )}
 
         {tab === "sortie" && (
           <DataTable
-            columns={["Date", "N° Lot", "TH", "Sacs", "Poids (kg)", "PM", "Destination", "Agent"]}
+            columns={["Date", "N° Lot", "TH", "Sacs", "Poids (kg)", "PM", "Destination", "Agent", ""]}
             rows={sorties.map((s) => [
               fmtDate(s.date),
               <button className="text-primary hover:underline" onClick={() => setDetailLot(s.lotId)}>{s.lotId}</button>,
               `${s.th}%`, s.sacs, s.poids.toLocaleString("fr-FR"), s.pm, s.destination, s.agent,
+              <RowActions
+                key={`act-${s.id}`}
+                label={s.id}
+                values={s as unknown as Record<string, unknown>}
+                fields={[
+                  { key: "date", label: "Date", type: "date" },
+                  { key: "th", label: "TH (%)", type: "number" },
+                  { key: "sacs", label: "Sacs", type: "number" },
+                  { key: "poids", label: "Poids (kg)", type: "number" },
+                  { key: "destination", label: "Destination" },
+                  { key: "charge", label: "Chargé", type: "number" },
+                  { key: "pesage", label: "Pesé", type: "number" },
+                  { key: "deplacement", label: "Déplacement", type: "number" },
+                  { key: "agent", label: "Agent" },
+                ]}
+                onSave={(patch) => paddyCrud.updateSortie(s.id, patch)}
+                onDelete={() => paddyCrud.removeSortie(s.id)}
+              />,
             ])}
           />
         )}
@@ -316,12 +374,11 @@ function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void 
           )}
           <Field label="Variété">
             <Select value={form.variete} onValueChange={(v) => setForm({ ...form, variete: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Choisir une variété" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="JT 11">JT 11</SelectItem>
-                <SelectItem value="Bouaké">Bouaké</SelectItem>
-                <SelectItem value="CY-2">CY-2</SelectItem>
-                <SelectItem value="Sahel 108">Sahel 108</SelectItem>
+                {varieteNoms.map((v) => (
+                  <SelectItem key={v} value={v}>{v}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </Field>
