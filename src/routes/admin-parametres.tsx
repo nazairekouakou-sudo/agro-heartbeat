@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useTarifs, tarifsActions } from "@/lib/tarifsStore";
 import { useAuth } from "@/lib/authStore";
+import { useVarietes, varietesActions } from "@/lib/varietesStore";
+import { Trash2, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/admin-parametres")({
   head: () => ({ meta: [{ title: "Paramètres — CAPI ERP" }] }),
@@ -53,7 +55,7 @@ function ParametresPage() {
 
   return (
     <>
-      <AppTopbar eyebrow="Administration" title="Paramètres — Grille tarifaire" />
+      <AppTopbar eyebrow="Administration" title="Paramètres" />
       <div className="p-6 space-y-6 max-w-2xl">
         <PageHeader
           title="Grille tarifaire"
@@ -106,7 +108,95 @@ function ParametresPage() {
 
           <Button onClick={save} disabled={saving}>{saving ? "Enregistrement…" : "Enregistrer la grille tarifaire"}</Button>
         </div>
+
+        <VarietesCard />
       </div>
     </>
+  );
+}
+
+function VarietesCard() {
+  const { varietes } = useVarietes();
+  const [nom, setNom] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function add() {
+    if (!nom.trim()) {
+      toast.error("Saisissez le nom de la variété.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await varietesActions.add(nom);
+      toast.success(`Variété « ${nom.trim()} » ajoutée.`);
+      setNom("");
+    } catch (e) {
+      toast.error("Erreur : " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove(id: string, label: string) {
+    setBusy(true);
+    try {
+      await varietesActions.remove(id);
+      toast.success(`Variété « ${label} » supprimée.`);
+    } catch (e) {
+      toast.error("Erreur : " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="card-elevated p-5 space-y-4">
+      <div>
+        <h3 className="font-display text-base mb-1">Variétés de riz</h3>
+        <p className="text-xs text-muted-foreground">
+          Référentiel partagé : utilisé dans le Service Paddy (approvisionnement) et dans les réceptions de
+          riz externe du Service Gestion.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {varietes.length === 0 && (
+          <p className="text-sm text-muted-foreground">Aucune variété enregistrée.</p>
+        )}
+        {varietes.map((v) => (
+          <span
+            key={v.id}
+            className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full border border-border text-sm"
+          >
+            {v.nom}
+            <button
+              onClick={() => remove(v.id, v.nom)}
+              disabled={busy}
+              aria-label={`Supprimer ${v.nom}`}
+              className="size-5 rounded-full inline-flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="size-3.5" />
+            </button>
+          </span>
+        ))}
+      </div>
+
+      <div className="flex items-end gap-2 max-w-sm">
+        <div className="flex-1 space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Nouvelle variété</Label>
+          <Input
+            value={nom}
+            placeholder="Ex : Nerica 4"
+            onChange={(e) => setNom(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") add();
+            }}
+          />
+        </div>
+        <Button onClick={add} disabled={busy} className="gap-1.5">
+          <Plus className="size-4" /> Ajouter
+        </Button>
+      </div>
+    </div>
   );
 }
