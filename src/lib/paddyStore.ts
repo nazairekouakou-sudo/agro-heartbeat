@@ -1,5 +1,6 @@
 // Store Service Paddy — persisté sur Supabase, synchronisé en temps réel entre appareils.
 import { useEffect, useSyncExternalStore } from "react";
+import { toRow } from "./rowMap";
 import { supabase } from "./supabaseClient";
 
 type Facturation = { tiers: string; montantFacture: number; typePrestation: "sechage" | "collecte" };
@@ -358,4 +359,47 @@ export const paddyActions = {
       refetchAll();
     })();
   },
+};
+
+// ---------- Modification / suppression ----------
+
+const APPRO_COLS: Partial<Record<keyof Appro, string>> = {
+  dateAppro: "date_appro", dateEntree: "date_entree", zone: "zone", entity: "entity",
+  entityName: "entity_name", fournisseur: "fournisseur", variete: "variete", th: "th", ti: "ti",
+  sacs: "sacs", poids: "poids", agent: "agent", pu: "pu", charge: "charge", pesage: "pesage",
+  dechargement: "dechargement", transport: "transport", fraisAnnexes: "frais_annexes",
+  prime: "prime", status: "status", tranche: "tranche",
+};
+
+const SECHAGE_COLS: Partial<Record<keyof Sechage, string>> = {
+  date: "date", lotId: "lot_id", thInitial: "th_initial", sacs: "sacs",
+  poidsAvant: "poids_avant", jours: "jours", thApres: "th_apres", poidsApres: "poids_apres",
+  agent: "agent", puSechage: "pu_sechage",
+};
+
+const SORTIE_COLS: Partial<Record<keyof Sortie, string>> = {
+  date: "date", lotId: "lot_id", th: "th", sacs: "sacs", poids: "poids",
+  destination: "destination", agent: "agent", charge: "charge", pesage: "pesage",
+  deplacement: "deplacement",
+};
+
+async function paddyMutate(table: string, id: string, row: Record<string, unknown>) {
+  const { error } = await supabase.from(table).update(row).eq("id", id);
+  if (error) throw error;
+  await refetchAll();
+}
+
+async function paddyRemove(table: string, id: string) {
+  const { error } = await supabase.from(table).delete().eq("id", id);
+  if (error) throw error;
+  await refetchAll();
+}
+
+export const paddyCrud = {
+  updateAppro: (id: string, patch: Partial<Appro>) => paddyMutate("appros", id, toRow(patch, APPRO_COLS)),
+  removeAppro: (id: string) => paddyRemove("appros", id),
+  updateSechage: (id: string, patch: Partial<Sechage>) => paddyMutate("sechages", id, toRow(patch, SECHAGE_COLS)),
+  removeSechage: (id: string) => paddyRemove("sechages", id),
+  updateSortie: (id: string, patch: Partial<Sortie>) => paddyMutate("sorties", id, toRow(patch, SORTIE_COLS)),
+  removeSortie: (id: string) => paddyRemove("sorties", id),
 };
