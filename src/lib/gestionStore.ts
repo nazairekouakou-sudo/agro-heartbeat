@@ -21,8 +21,7 @@ export type SortieRiz = {
 
 export type ReceptionRizExterneStatut = "recu" | "en_triage" | "trie";
 
-export type QualiteRizExterne = "Blanc" | "Moyen blanc" | "Rouge" | "Autre";
-export const QUALITES_RIZ_EXTERNE: QualiteRizExterne[] = ["Blanc", "Moyen blanc", "Rouge", "Autre"];
+// La variété du riz vient du référentiel partagé (voir varietesStore.ts).
 
 export type DestinationRizExterne = "Calibrage" | "Trieuse optique" | "Vente";
 export const DESTINATIONS_RIZ_EXTERNE: DestinationRizExterne[] = ["Calibrage", "Trieuse optique", "Vente"];
@@ -36,7 +35,7 @@ export type ReceptionRizExterne = {
   entityType: Entity;
   entityName: string;
   poids: number;
-  qualite: QualiteRizExterne;
+  variete: string;
   destination: DestinationRizExterne;
   statut: ReceptionRizExterneStatut;
 };
@@ -103,7 +102,7 @@ function receptionFromRow(r: any): ReceptionRizExterne {
   return {
     id: r.id, date: r.date, entityType: r.entity_type, entityName: r.entity_name,
     poids: Number(r.poids),
-    qualite: (r.qualite ?? "Blanc") as QualiteRizExterne,
+    variete: r.variete ?? r.qualite ?? "—",
     destination: (r.destination ?? "Trieuse optique") as DestinationRizExterne,
     statut: r.statut,
   };
@@ -206,7 +205,7 @@ export const gestionActions = {
       .from("receptions_riz_externe")
       .insert({
         id, date: input.date, entity_type: input.entityType, entity_name: input.entityName,
-        poids: input.poids, qualite: input.qualite, destination: input.destination,
+        poids: input.poids, variete: input.variete, destination: input.destination,
       })
       .then(({ error }) => {
         if (error) {
