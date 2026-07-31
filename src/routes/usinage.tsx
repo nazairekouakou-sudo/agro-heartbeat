@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { usePaddy, reliquat, type Appro } from "@/lib/paddyStore";
-import { usinageCrud, QUALITES } from "@/lib/usinageStore";
+import { usinageCrud } from "@/lib/usinageStore";
 import { RowActions } from "@/components/RowActions";
 import { useGestion, gestionActions, type ReceptionRizExterne } from "@/lib/gestionStore";
 import { useTarifs } from "@/lib/tarifsStore";
