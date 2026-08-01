@@ -290,8 +290,8 @@ function NewCommandeDialog({
   const margePct = prixRevient > 0 ? (margeParKg / prixRevient) * 100 : 0;
 
   function submit() {
-    if (!form.lotId || !form.quantite || !form.prixVente) {
-      toast.error("Lot, quantité et prix de vente sont obligatoires.");
+    if (!form.lotId || !form.quantite || !form.prixVente || !form.boutique) {
+      toast.error("Lot, boutique, quantité et prix de vente sont obligatoires.");
       return;
     }
     const commandeId = `CMD-${String(800 + existingCount + 1)}`;
@@ -311,7 +311,7 @@ function NewCommandeDialog({
           <Field label="Date"><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field>
           <Field label="Boutique">
             <Select value={form.boutique} onValueChange={(v) => setForm({ ...form, boutique: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Choisir une boutique" /></SelectTrigger>
               <SelectContent>{BOUTIQUES.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
             </Select>
           </Field>
@@ -370,8 +370,8 @@ function NewVenteDialog({ open, onClose }: { open: boolean; onClose: () => void 
   });
 
   function submit() {
-    if (!form.produit || !form.prixVente) {
-      toast.error("Produit et prix de vente sont obligatoires.");
+    if (!form.produit || !form.prixVente || !form.boutique) {
+      toast.error("Boutique, produit et prix de vente sont obligatoires.");
       return;
     }
     const id = commercialActions.addVente(form);
@@ -387,7 +387,7 @@ function NewVenteDialog({ open, onClose }: { open: boolean; onClose: () => void 
           <Field label="Date"><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field>
           <Field label="Boutique">
             <Select value={form.boutique} onValueChange={(v) => setForm({ ...form, boutique: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Choisir une boutique" /></SelectTrigger>
               <SelectContent>{BOUTIQUES.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
             </Select>
           </Field>
@@ -417,8 +417,8 @@ function NewVersementDialog({ open, onClose }: { open: boolean; onClose: () => v
   });
 
   function submit() {
-    if (!form.montantVerse || !form.agent) {
-      toast.error("Montant versé et agent sont obligatoires.");
+    if (!form.montantVerse || !form.agent || !form.boutique) {
+      toast.error("Boutique, montant versé et agent sont obligatoires.");
       return;
     }
     const id = commercialActions.addVersement(form);
@@ -434,7 +434,7 @@ function NewVersementDialog({ open, onClose }: { open: boolean; onClose: () => v
           <Field label="Date"><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field>
           <Field label="Boutique">
             <Select value={form.boutique} onValueChange={(v) => setForm({ ...form, boutique: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Choisir une boutique" /></SelectTrigger>
               <SelectContent>{BOUTIQUES.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
             </Select>
           </Field>
