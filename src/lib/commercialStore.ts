@@ -6,8 +6,7 @@ import { toRow } from "./rowMap";
 import { supabase } from "./supabaseClient";
 import { queuedInsert } from "./offlineQueue";
 
-export const BOUTIQUES = ["Dakar Centre", "St-Louis", "Thiès", "Louga"] as const;
-export type Boutique = (typeof BOUTIQUES)[number];
+// Les boutiques sont désormais gérées dans Paramètres (voir boutiquesStore.ts).
 
 export type VenteBoutique = {
   id: string;
