@@ -51,6 +51,7 @@ export type Appro = {
   fraisAnnexes: number;
   prime: number;
   chargeTotale: number;
+  campagne: string;
   status: LotStatus;
   tranche: "A" | "B" | "ecos" | null; // tranche de facturation choisie pour les lots tiers
 };
@@ -137,7 +138,7 @@ function approFromRow(r: any): Appro {
     pm: Number(r.pm), agent: r.agent, pu: Number(r.pu), cap: Number(r.cap),
     charge: Number(r.charge), pesage: Number(r.pesage), dechargement: Number(r.dechargement),
     transport: Number(r.transport), fraisAnnexes: Number(r.frais_annexes), prime: Number(r.prime),
-    chargeTotale: Number(r.charge_totale), status: r.status, tranche: r.tranche ?? null,
+    chargeTotale: Number(r.charge_totale), campagne: r.campagne ?? "", status: r.status, tranche: r.tranche ?? null,
   };
 }
 
@@ -261,7 +262,8 @@ export const paddyActions = {
       th: input.th, ti: input.ti, sacs: input.sacs, poids: input.poids, agent: input.agent,
       pu: input.pu, charge: input.charge, pesage: input.pesage,
       dechargement: input.dechargement, transport: input.transport,
-      frais_annexes: input.fraisAnnexes, prime: input.prime, status: "Collecte", tranche: input.tranche,
+      frais_annexes: input.fraisAnnexes, prime: input.prime, campagne: input.campagne,
+      status: "Collecte", tranche: input.tranche,
     }).then(({ error, queued }) => {
       if (error) {
         console.error("[paddyStore] addAppro:", error);
@@ -375,7 +377,7 @@ const APPRO_COLS: Partial<Record<keyof Appro, string>> = {
   entityName: "entity_name", fournisseur: "fournisseur", variete: "variete", th: "th", ti: "ti",
   sacs: "sacs", poids: "poids", agent: "agent", pu: "pu", charge: "charge", pesage: "pesage",
   dechargement: "dechargement", transport: "transport", fraisAnnexes: "frais_annexes",
-  prime: "prime", status: "status", tranche: "tranche",
+  prime: "prime", campagne: "campagne", status: "status", tranche: "tranche",
 };
 
 const SECHAGE_COLS: Partial<Record<keyof Sechage, string>> = {
