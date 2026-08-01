@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useTarifs, tarifsActions } from "@/lib/tarifsStore";
 import { useAuth } from "@/lib/authStore";
 import { useVarietes, varietesActions } from "@/lib/varietesStore";
+import { useBoutiques, boutiquesActions, type Boutique } from "@/lib/boutiquesStore";
 import { Trash2, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/admin-parametres")({
@@ -110,6 +111,8 @@ function ParametresPage() {
         </div>
 
         <VarietesCard />
+
+        <BoutiquesCard />
       </div>
     </>
   );
@@ -188,6 +191,128 @@ function VarietesCard() {
             value={nom}
             placeholder="Ex : Nerica 4"
             onChange={(e) => setNom(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") add();
+            }}
+          />
+        </div>
+        <Button onClick={add} disabled={busy} className="gap-1.5">
+          <Plus className="size-4" /> Ajouter
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function BoutiqueRow({ boutique, busy, setBusy }: { boutique: Boutique; busy: boolean; setBusy: (b: boolean) => void }) {
+  const [name, setName] = useState(boutique.name);
+  const [seller, setSeller] = useState(boutique.sellerName ?? "");
+
+  useEffect(() => {
+    setName(boutique.name);
+    setSeller(boutique.sellerName ?? "");
+  }, [boutique.name, boutique.sellerName]);
+
+  const dirty = name !== boutique.name || seller !== (boutique.sellerName ?? "");
+
+  async function save() {
+    setBusy(true);
+    try {
+      await boutiquesActions.update(boutique.id, { name, sellerName: seller });
+      toast.success("Boutique mise à jour.");
+    } catch (e) {
+      toast.error("Erreur : " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove() {
+    setBusy(true);
+    try {
+      await boutiquesActions.remove(boutique.id);
+      toast.success(`Boutique « ${boutique.name} » supprimée.`);
+    } catch (e) {
+      toast.error("Erreur : " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end border-t border-border pt-3">
+      <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground">Boutique</Label>
+        <Input value={name} onChange={(e) => setName(e.target.value)} />
+      </div>
+      <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground">Vendeuse</Label>
+        <Input value={seller} placeholder="Nom de la vendeuse" onChange={(e) => setSeller(e.target.value)} />
+      </div>
+      <div className="flex gap-2">
+        <Button size="sm" variant="outline" onClick={save} disabled={busy || !dirty}>Enregistrer</Button>
+        <Button size="sm" variant="ghost" onClick={remove} disabled={busy} aria-label={`Supprimer ${boutique.name}`}>
+          <Trash2 className="size-4 text-muted-foreground hover:text-destructive" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function BoutiquesCard() {
+  const { boutiques, loaded } = useBoutiques();
+  const [nom, setNom] = useState("");
+  const [vendeuse, setVendeuse] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function add() {
+    if (!nom.trim()) {
+      toast.error("Saisissez le nom de la boutique.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await boutiquesActions.add(nom, vendeuse);
+      toast.success(`Boutique « ${nom.trim()} » ajoutée.`);
+      setNom("");
+      setVendeuse("");
+    } catch (e) {
+      toast.error("Erreur : " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="card-elevated p-5 space-y-4">
+      <div>
+        <h3 className="font-display text-base mb-1">Boutiques &amp; vendeuses</h3>
+        <p className="text-xs text-muted-foreground">
+          Référentiel partagé : utilisé dans le Service Commercial (commandes, ventes par boutique, versements
+          de caisse).
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {loaded && boutiques.length === 0 && (
+          <p className="text-sm text-muted-foreground">Aucune boutique enregistrée.</p>
+        )}
+        {boutiques.map((b) => (
+          <BoutiqueRow key={b.id} boutique={b} busy={busy} setBusy={setBusy} />
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end border-t border-border pt-4">
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Nouvelle boutique</Label>
+          <Input value={nom} placeholder="Ex : Boutique Tazibouo" onChange={(e) => setNom(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Vendeuse</Label>
+          <Input
+            value={vendeuse}
+            placeholder="Nom de la vendeuse"
+            onChange={(e) => setVendeuse(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") add();
             }}
