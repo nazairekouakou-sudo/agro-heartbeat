@@ -11,7 +11,8 @@ import { useTarifs, tarifsActions } from "@/lib/tarifsStore";
 import { useAuth } from "@/lib/authStore";
 import { useVarietes, varietesActions } from "@/lib/varietesStore";
 import { useBoutiques, boutiquesActions, type Boutique } from "@/lib/boutiquesStore";
-import { Trash2, Plus } from "lucide-react";
+import { useCampagnes, campagnesActions, type Campagne } from "@/lib/campagnesStore";
+import { Trash2, Plus, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/admin-parametres")({
   head: () => ({ meta: [{ title: "Paramètres — CAPI ERP" }] }),
@@ -110,11 +111,153 @@ function ParametresPage() {
           <Button onClick={save} disabled={saving}>{saving ? "Enregistrement…" : "Enregistrer la grille tarifaire"}</Button>
         </div>
 
+        <CampagnesCard />
+
         <VarietesCard />
 
         <BoutiquesCard />
       </div>
     </>
+  );
+}
+
+function CampagneRow({ campagne, busy, setBusy }: { campagne: Campagne; busy: boolean; setBusy: (b: boolean) => void }) {
+  const [nom, setNom] = useState(campagne.nom);
+  const [debut, setDebut] = useState(campagne.dateDebut ?? "");
+  const [fin, setFin] = useState(campagne.dateFin ?? "");
+
+  useEffect(() => {
+    setNom(campagne.nom);
+    setDebut(campagne.dateDebut ?? "");
+    setFin(campagne.dateFin ?? "");
+  }, [campagne.nom, campagne.dateDebut, campagne.dateFin]);
+
+  const dirty = nom !== campagne.nom || debut !== (campagne.dateDebut ?? "") || fin !== (campagne.dateFin ?? "");
+
+  async function run(fn: () => Promise<void>, ok: string) {
+    setBusy(true);
+    try {
+      await fn();
+      toast.success(ok);
+    } catch (e) {
+      toast.error("Erreur : " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-2 items-end border-t border-border pt-3">
+      <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground">
+          Campagne {campagne.active && <span className="text-primary">— en cours</span>}
+        </Label>
+        <Input value={nom} onChange={(e) => setNom(e.target.value)} />
+      </div>
+      <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground">Début</Label>
+        <Input type="date" value={debut} onChange={(e) => setDebut(e.target.value)} />
+      </div>
+      <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground">Fin</Label>
+        <Input type="date" value={fin} onChange={(e) => setFin(e.target.value)} />
+      </div>
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={busy || !dirty}
+          onClick={() => run(() => campagnesActions.update(campagne.id, { nom, dateDebut: debut, dateFin: fin }), "Campagne mise à jour.")}
+        >
+          Enregistrer
+        </Button>
+        {!campagne.active && (
+          <Button
+            size="sm"
+            variant="secondary"
+            className="gap-1.5"
+            disabled={busy}
+            onClick={() => run(() => campagnesActions.setActive(campagne.id), `« ${campagne.nom} » est désormais la campagne en cours.`)}
+          >
+            <CheckCircle2 className="size-4" /> Rendre active
+          </Button>
+        )}
+        <Button
+          size="sm"
+          variant="ghost"
+          className="text-destructive"
+          disabled={busy}
+          aria-label={`Supprimer ${campagne.nom}`}
+          onClick={() => run(() => campagnesActions.remove(campagne.id), `Campagne « ${campagne.nom} » supprimée.`)}
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function CampagnesCard() {
+  const { campagnes } = useCampagnes();
+  const [nom, setNom] = useState("");
+  const [debut, setDebut] = useState("");
+  const [fin, setFin] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function add() {
+    if (!nom.trim()) {
+      toast.error("Saisissez le nom de la campagne (ex : 2024-2025).");
+      return;
+    }
+    setBusy(true);
+    try {
+      await campagnesActions.add({ nom, dateDebut: debut, dateFin: fin });
+      toast.success(`Campagne « ${nom.trim()} » ajoutée.`);
+      setNom(""); setDebut(""); setFin("");
+    } catch (e) {
+      toast.error("Erreur : " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="card-elevated p-5 space-y-4">
+      <div>
+        <h3 className="font-display text-base mb-1">Campagnes agricoles</h3>
+        <p className="text-xs text-muted-foreground">
+          Référentiel des campagnes. La campagne « en cours » est proposée par défaut lors des saisies,
+          mais il reste possible de choisir une campagne antérieure (reprise d'historique).
+        </p>
+      </div>
+
+      {campagnes.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          Aucune campagne enregistrée. Créez d'abord la campagne antérieure, puis la campagne en cours.
+        </p>
+      )}
+      {campagnes.map((c) => (
+        <CampagneRow key={c.id} campagne={c} busy={busy} setBusy={setBusy} />
+      ))}
+
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-2 items-end border-t border-border pt-4">
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Nouvelle campagne</Label>
+          <Input value={nom} placeholder="Ex : 2024-2025" onChange={(e) => setNom(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Début</Label>
+          <Input type="date" value={debut} onChange={(e) => setDebut(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Fin</Label>
+          <Input type="date" value={fin} onChange={(e) => setFin(e.target.value)} />
+        </div>
+        <Button onClick={add} disabled={busy} className="gap-1.5">
+          <Plus className="size-4" /> Ajouter
+        </Button>
+      </div>
+    </div>
   );
 }
 
