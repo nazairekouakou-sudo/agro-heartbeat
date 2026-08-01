@@ -9,73 +9,23 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AdminImportEcosRouteImport } from './routes/admin-import-ecos'
-import { Route as AdminParametresRouteImport } from './routes/admin-parametres'
-import { Route as AdminSetupRouteImport } from './routes/admin-setup'
-import { Route as AdminUtilisateursRouteImport } from './routes/admin-utilisateurs'
-import { Route as CommercialRouteImport } from './routes/commercial'
-import { Route as ComptableRouteImport } from './routes/comptable'
-import { Route as GestionRouteImport } from './routes/gestion'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as PaddyRouteImport } from './routes/paddy'
-import { Route as PartenairesRouteImport } from './routes/partenaires'
-import { Route as ReportingRouteImport } from './routes/reporting'
 import { Route as UsinageRouteImport } from './routes/usinage'
+import { Route as ReportingRouteImport } from './routes/reporting'
+import { Route as PartenairesRouteImport } from './routes/partenaires'
+import { Route as PaddyRouteImport } from './routes/paddy'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as GestionRouteImport } from './routes/gestion'
+import { Route as ComptableRouteImport } from './routes/comptable'
+import { Route as CommercialRouteImport } from './routes/commercial'
+import { Route as AdminUtilisateursRouteImport } from './routes/admin-utilisateurs'
+import { Route as AdminSetupRouteImport } from './routes/admin-setup'
+import { Route as AdminParametresRouteImport } from './routes/admin-parametres'
+import { Route as AdminImportEcosRouteImport } from './routes/admin-import-ecos'
+import { Route as IndexRouteImport } from './routes/index'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminImportEcosRoute = AdminImportEcosRouteImport.update({
-  id: '/admin-import-ecos',
-  path: '/admin-import-ecos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminParametresRoute = AdminParametresRouteImport.update({
-  id: '/admin-parametres',
-  path: '/admin-parametres',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminSetupRoute = AdminSetupRouteImport.update({
-  id: '/admin-setup',
-  path: '/admin-setup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminUtilisateursRoute = AdminUtilisateursRouteImport.update({
-  id: '/admin-utilisateurs',
-  path: '/admin-utilisateurs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CommercialRoute = CommercialRouteImport.update({
-  id: '/commercial',
-  path: '/commercial',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ComptableRoute = ComptableRouteImport.update({
-  id: '/comptable',
-  path: '/comptable',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GestionRoute = GestionRouteImport.update({
-  id: '/gestion',
-  path: '/gestion',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PaddyRoute = PaddyRouteImport.update({
-  id: '/paddy',
-  path: '/paddy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PartenairesRoute = PartenairesRouteImport.update({
-  id: '/partenaires',
-  path: '/partenaires',
+const UsinageRoute = UsinageRouteImport.update({
+  id: '/usinage',
+  path: '/usinage',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReportingRoute = ReportingRouteImport.update({
@@ -83,9 +33,59 @@ const ReportingRoute = ReportingRouteImport.update({
   path: '/reporting',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UsinageRoute = UsinageRouteImport.update({
-  id: '/usinage',
-  path: '/usinage',
+const PartenairesRoute = PartenairesRouteImport.update({
+  id: '/partenaires',
+  path: '/partenaires',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaddyRoute = PaddyRouteImport.update({
+  id: '/paddy',
+  path: '/paddy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GestionRoute = GestionRouteImport.update({
+  id: '/gestion',
+  path: '/gestion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComptableRoute = ComptableRouteImport.update({
+  id: '/comptable',
+  path: '/comptable',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommercialRoute = CommercialRouteImport.update({
+  id: '/commercial',
+  path: '/commercial',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUtilisateursRoute = AdminUtilisateursRouteImport.update({
+  id: '/admin-utilisateurs',
+  path: '/admin-utilisateurs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSetupRoute = AdminSetupRouteImport.update({
+  id: '/admin-setup',
+  path: '/admin-setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminParametresRoute = AdminParametresRouteImport.update({
+  id: '/admin-parametres',
+  path: '/admin-parametres',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminImportEcosRoute = AdminImportEcosRouteImport.update({
+  id: '/admin-import-ecos',
+  path: '/admin-import-ecos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -201,81 +201,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin-import-ecos': {
-      id: '/admin-import-ecos'
-      path: '/admin-import-ecos'
-      fullPath: '/admin-import-ecos'
-      preLoaderRoute: typeof AdminImportEcosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin-parametres': {
-      id: '/admin-parametres'
-      path: '/admin-parametres'
-      fullPath: '/admin-parametres'
-      preLoaderRoute: typeof AdminParametresRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin-setup': {
-      id: '/admin-setup'
-      path: '/admin-setup'
-      fullPath: '/admin-setup'
-      preLoaderRoute: typeof AdminSetupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin-utilisateurs': {
-      id: '/admin-utilisateurs'
-      path: '/admin-utilisateurs'
-      fullPath: '/admin-utilisateurs'
-      preLoaderRoute: typeof AdminUtilisateursRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/commercial': {
-      id: '/commercial'
-      path: '/commercial'
-      fullPath: '/commercial'
-      preLoaderRoute: typeof CommercialRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/comptable': {
-      id: '/comptable'
-      path: '/comptable'
-      fullPath: '/comptable'
-      preLoaderRoute: typeof ComptableRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/gestion': {
-      id: '/gestion'
-      path: '/gestion'
-      fullPath: '/gestion'
-      preLoaderRoute: typeof GestionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/paddy': {
-      id: '/paddy'
-      path: '/paddy'
-      fullPath: '/paddy'
-      preLoaderRoute: typeof PaddyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/partenaires': {
-      id: '/partenaires'
-      path: '/partenaires'
-      fullPath: '/partenaires'
-      preLoaderRoute: typeof PartenairesRouteImport
+    '/usinage': {
+      id: '/usinage'
+      path: '/usinage'
+      fullPath: '/usinage'
+      preLoaderRoute: typeof UsinageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reporting': {
@@ -285,11 +215,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/usinage': {
-      id: '/usinage'
-      path: '/usinage'
-      fullPath: '/usinage'
-      preLoaderRoute: typeof UsinageRouteImport
+    '/partenaires': {
+      id: '/partenaires'
+      path: '/partenaires'
+      fullPath: '/partenaires'
+      preLoaderRoute: typeof PartenairesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paddy': {
+      id: '/paddy'
+      path: '/paddy'
+      fullPath: '/paddy'
+      preLoaderRoute: typeof PaddyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gestion': {
+      id: '/gestion'
+      path: '/gestion'
+      fullPath: '/gestion'
+      preLoaderRoute: typeof GestionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comptable': {
+      id: '/comptable'
+      path: '/comptable'
+      fullPath: '/comptable'
+      preLoaderRoute: typeof ComptableRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/commercial': {
+      id: '/commercial'
+      path: '/commercial'
+      fullPath: '/commercial'
+      preLoaderRoute: typeof CommercialRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-utilisateurs': {
+      id: '/admin-utilisateurs'
+      path: '/admin-utilisateurs'
+      fullPath: '/admin-utilisateurs'
+      preLoaderRoute: typeof AdminUtilisateursRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-setup': {
+      id: '/admin-setup'
+      path: '/admin-setup'
+      fullPath: '/admin-setup'
+      preLoaderRoute: typeof AdminSetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-parametres': {
+      id: '/admin-parametres'
+      path: '/admin-parametres'
+      fullPath: '/admin-parametres'
+      preLoaderRoute: typeof AdminParametresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-import-ecos': {
+      id: '/admin-import-ecos'
+      path: '/admin-import-ecos'
+      fullPath: '/admin-import-ecos'
+      preLoaderRoute: typeof AdminImportEcosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -313,13 +313,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -13,7 +13,8 @@ import { toast } from "sonner";
 import { useUsinage, type Decorticage } from "@/lib/usinageStore";
 import { usePaddy } from "@/lib/paddyStore";
 import { useGestion, gestionActions, type RizCategorie } from "@/lib/gestionStore";
-import { useCommercial, commercialActions, commercialCrud, BOUTIQUES } from "@/lib/commercialStore";
+import { useCommercial, commercialActions, commercialCrud } from "@/lib/commercialStore";
+import { useBoutiqueNoms } from "@/lib/boutiquesStore";
 import { gestionCrud } from "@/lib/gestionStore";
 import { RowActions } from "@/components/RowActions";
 import { useTarifs, prixParCategorie } from "@/lib/tarifsStore";
@@ -65,6 +66,7 @@ function CommercialPage() {
   const { decorticages } = useUsinage();
   const { sortiesRiz } = useGestion();
   const { ventes, versements } = useCommercial();
+  const BOUTIQUES = useBoutiqueNoms();
 
   const caDuMois = useMemo(() => ventes.filter((v) => thisMonth(v.date)).reduce((s, v) => s + v.montant, 0), [ventes]);
   const versementsSemaine = useMemo(
@@ -254,13 +256,14 @@ function NewCommandeDialog({
   const tarifs = useTarifs();
   const { appros, sechages, sorties } = usePaddy();
   const { calibrages, tries } = useUsinage();
+  const BOUTIQUES = useBoutiqueNoms();
   const [form, setForm] = useState({
     date: gestionActions.todayISO(),
     lotId: lotIds[0] ?? "",
     categorie: "Long grain" as RizCategorie,
     quantite: 0,
     prixVente: tarifs.prixRizBlanc,
-    boutique: BOUTIQUES[0] as string,
+    boutique: "",
   });
 
   function setCategorie(categorie: RizCategorie) {
@@ -287,8 +290,8 @@ function NewCommandeDialog({
   const margePct = prixRevient > 0 ? (margeParKg / prixRevient) * 100 : 0;
 
   function submit() {
-    if (!form.lotId || !form.quantite || !form.prixVente) {
-      toast.error("Lot, quantité et prix de vente sont obligatoires.");
+    if (!form.lotId || !form.quantite || !form.prixVente || !form.boutique) {
+      toast.error("Lot, boutique, quantité et prix de vente sont obligatoires.");
       return;
     }
     const commandeId = `CMD-${String(800 + existingCount + 1)}`;
@@ -308,7 +311,7 @@ function NewCommandeDialog({
           <Field label="Date"><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field>
           <Field label="Boutique">
             <Select value={form.boutique} onValueChange={(v) => setForm({ ...form, boutique: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Choisir une boutique" /></SelectTrigger>
               <SelectContent>{BOUTIQUES.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
             </Select>
           </Field>
@@ -355,9 +358,10 @@ function NewCommandeDialog({
 
 function NewVenteDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const tarifs = useTarifs();
+  const BOUTIQUES = useBoutiqueNoms();
   const [form, setForm] = useState({
     date: commercialActions.todayISO(),
-    boutique: BOUTIQUES[0] as string,
+    boutique: "",
     produit: "",
     stockInitial: 0,
     entree: 0,
@@ -366,8 +370,8 @@ function NewVenteDialog({ open, onClose }: { open: boolean; onClose: () => void 
   });
 
   function submit() {
-    if (!form.produit || !form.prixVente) {
-      toast.error("Produit et prix de vente sont obligatoires.");
+    if (!form.produit || !form.prixVente || !form.boutique) {
+      toast.error("Boutique, produit et prix de vente sont obligatoires.");
       return;
     }
     const id = commercialActions.addVente(form);
@@ -383,7 +387,7 @@ function NewVenteDialog({ open, onClose }: { open: boolean; onClose: () => void 
           <Field label="Date"><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field>
           <Field label="Boutique">
             <Select value={form.boutique} onValueChange={(v) => setForm({ ...form, boutique: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Choisir une boutique" /></SelectTrigger>
               <SelectContent>{BOUTIQUES.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
             </Select>
           </Field>
@@ -403,17 +407,18 @@ function NewVenteDialog({ open, onClose }: { open: boolean; onClose: () => void 
 }
 
 function NewVersementDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const BOUTIQUES = useBoutiqueNoms();
   const [form, setForm] = useState({
     date: commercialActions.todayISO(),
-    boutique: BOUTIQUES[0] as string,
+    boutique: "",
     montantVerse: 0,
     soldeRestant: 0,
     agent: "",
   });
 
   function submit() {
-    if (!form.montantVerse || !form.agent) {
-      toast.error("Montant versé et agent sont obligatoires.");
+    if (!form.montantVerse || !form.agent || !form.boutique) {
+      toast.error("Boutique, montant versé et agent sont obligatoires.");
       return;
     }
     const id = commercialActions.addVersement(form);
@@ -429,7 +434,7 @@ function NewVersementDialog({ open, onClose }: { open: boolean; onClose: () => v
           <Field label="Date"><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Field>
           <Field label="Boutique">
             <Select value={form.boutique} onValueChange={(v) => setForm({ ...form, boutique: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Choisir une boutique" /></SelectTrigger>
               <SelectContent>{BOUTIQUES.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
             </Select>
           </Field>

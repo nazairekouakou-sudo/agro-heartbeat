@@ -1,10 +1,13 @@
+import { useEffect, useState } from "react";
 import { WifiOff, RefreshCw } from "lucide-react";
 import { useOfflineQueue } from "@/lib/offlineQueue";
 
 export function OfflineBanner() {
   const { online, queue, syncing } = useOfflineQueue();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  if (online && queue.length === 0) return null;
+  if (!mounted || (online && queue.length === 0)) return null;
 
   return (
     <div
