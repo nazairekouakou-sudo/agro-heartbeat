@@ -2,6 +2,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { toRow } from "./rowMap";
 import { supabase } from "./supabaseClient";
+import { queuedInsert } from "./offlineQueue";
 
 type Facturation = { tiers: string; montantFacture: number; typePrestation: "sechage" | "collecte" };
 
@@ -254,25 +255,22 @@ export const paddyActions = {
     state = { ...state, appros: [optimistic, ...state.appros] };
     emit();
 
-    supabase
-      .from("appros")
-      .insert({
-        id, date_appro: input.dateAppro, date_entree: input.dateEntree, zone: input.zone,
-        entity: input.entity, entity_name: input.entityName, fournisseur: input.fournisseur, variete: input.variete,
-        th: input.th, ti: input.ti, sacs: input.sacs, poids: input.poids, agent: input.agent,
-        pu: input.pu, charge: input.charge, pesage: input.pesage,
-        dechargement: input.dechargement, transport: input.transport,
-        frais_annexes: input.fraisAnnexes, prime: input.prime, status: "Collecte", tranche: input.tranche,
-      })
-      .then(({ error }) => {
-        if (error) {
-          console.error("[paddyStore] addAppro:", error.message);
-          state = { ...state, appros: state.appros.filter((a) => a.id !== id) };
-          emit();
-        } else {
-          refetchAll();
-          // Prestation de service pour les tiers : les charges annexes de
-          // réception (déchargement, transport, pesage) sont facturées au
+    queuedInsert("appros", {
+      id, date_appro: input.dateAppro, date_entree: input.dateEntree, zone: input.zone,
+      entity: input.entity, entity_name: input.entityName, fournisseur: input.fournisseur, variete: input.variete,
+      th: input.th, ti: input.ti, sacs: input.sacs, poids: input.poids, agent: input.agent,
+      pu: input.pu, charge: input.charge, pesage: input.pesage,
+      dechargement: input.dechargement, transport: input.transport,
+      frais_annexes: input.fraisAnnexes, prime: input.prime, status: "Collecte", tranche: input.tranche,
+    }).then(({ error, queued }) => {
+      if (error) {
+        console.error("[paddyStore] addAppro:", error);
+        state = { ...state, appros: state.appros.filter((a) => a.id !== id) };
+        emit();
+      } else if (!queued) {
+        refetchAll();
+        // Prestation de service pour les tiers : les charges annexes de
+        // réception (déchargement, transport, pesage) sont facturées au
           // partenaire/prestataire, pas absorbées comme coût CAPI.
           if (input.entity !== "CAPI") {
             const montantAnnexes = input.charge + input.pesage + input.dechargement + input.transport;
@@ -305,26 +303,31 @@ export const paddyActions = {
     emit();
 
     (async () => {
-      const { error: sechageErr } = await supabase.from("sechages").insert({
-        id, date: input.date, lot_id: input.lotId, th_initial: input.thInitial,
-        sacs: input.sacs, poids_avant: input.poidsAvant, jours: input.jours,
-        th_apres: input.thApres, poids_apres: input.poidsApres, agent: input.agent,
-        pu_sechage: input.puSechage,
-      });
-      if (sechageErr) console.error("[paddyStore] addSechage:", sechageErr.message);
+      try {
+        const { error: sechageErr, queued } = await queuedInsert("sechages", {
+          id, date: input.date, lot_id: input.lotId, th_initial: input.thInitial,
+          sacs: input.sacs, poids_avant: input.poidsAvant, jours: input.jours,
+          th_apres: input.thApres, poids_apres: input.poidsApres, agent: input.agent,
+          pu_sechage: input.puSechage,
+        });
+        if (sechageErr) console.error("[paddyStore] addSechage:", sechageErr);
 
-      const { error: approErr } = await supabase
-        .from("appros")
-        .update({ status: "Stocké", poids: input.poidsApres, th: input.thApres })
-        .eq("id", input.lotId);
-      if (approErr) console.error("[paddyStore] update appro after séchage:", approErr.message);
+        const { error: approErr } = await supabase
+          .from("appros")
+          .update({ status: "Stocké", poids: input.poidsApres, th: input.thApres })
+          .eq("id", input.lotId);
+        if (approErr) console.error("[paddyStore] update appro after séchage:", approErr.message);
 
-      const lot = state.appros.find((a) => a.id === input.lotId);
-      if (lot && lot.entity !== "CAPI") {
-        await creerFacturePrestation({ tiers: lot.entityName, montantFacture: montant, typePrestation: "sechage" }, input.lotId, input.date);
+        if (!queued) {
+          const lot = state.appros.find((a) => a.id === input.lotId);
+          if (lot && lot.entity !== "CAPI") {
+            await creerFacturePrestation({ tiers: lot.entityName, montantFacture: montant, typePrestation: "sechage" }, input.lotId, input.date);
+          }
+          refetchAll();
+        }
+      } catch (e) {
+        console.error("[paddyStore] addSechage (hors ligne ?):", e);
       }
-
-      refetchAll();
     })();
   },
 
@@ -343,20 +346,24 @@ export const paddyActions = {
     emit();
 
     (async () => {
-      const { error: sortieErr } = await supabase.from("sorties").insert({
-        id, date: input.date, lot_id: input.lotId, th: input.th, sacs: input.sacs,
-        poids: input.poids, destination: input.destination, agent: input.agent,
-        charge: input.charge, pesage: input.pesage, deplacement: input.deplacement,
-      });
-      if (sortieErr) console.error("[paddyStore] addSortie:", sortieErr.message);
+      try {
+        const { error: sortieErr, queued } = await queuedInsert("sorties", {
+          id, date: input.date, lot_id: input.lotId, th: input.th, sacs: input.sacs,
+          poids: input.poids, destination: input.destination, agent: input.agent,
+          charge: input.charge, pesage: input.pesage, deplacement: input.deplacement,
+        });
+        if (sortieErr) console.error("[paddyStore] addSortie:", sortieErr);
 
-      const { error: approErr } = await supabase
-        .from("appros")
-        .update({ status: newStatus })
-        .eq("id", input.lotId);
-      if (approErr) console.error("[paddyStore] update appro after sortie:", approErr.message);
+        const { error: approErr } = await supabase
+          .from("appros")
+          .update({ status: newStatus })
+          .eq("id", input.lotId);
+        if (approErr) console.error("[paddyStore] update appro after sortie:", approErr.message);
 
-      refetchAll();
+        if (!queued) refetchAll();
+      } catch (e) {
+        console.error("[paddyStore] addSortie (hors ligne ?):", e);
+      }
     })();
   },
 };

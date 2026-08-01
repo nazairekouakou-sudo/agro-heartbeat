@@ -3,6 +3,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { toRow } from "./rowMap";
 import { supabase } from "./supabaseClient";
+import { queuedInsert } from "./offlineQueue";
 import type { Entity } from "./paddyStore";
 
 export type RizCategorie = "Long grain" | "2X Cassé" | "Fine Brisure";
@@ -175,22 +176,19 @@ export const gestionActions = {
     state = { ...state, sortiesRiz: [optimistic, ...state.sortiesRiz] };
     emit();
 
-    supabase
-      .from("sorties_riz")
-      .insert({
-        id, date: input.date, commande_id: input.commandeId, lot_id: input.lotId,
-        categorie: input.categorie, quantite: input.quantite, prix_vente: input.prixVente,
-        boutique: input.boutique,
-      })
-      .then(({ error }) => {
-        if (error) {
-          console.error("[gestionStore] addSortieRiz:", error.message);
-          state = { ...state, sortiesRiz: state.sortiesRiz.filter((s) => s.id !== id) };
-          emit();
-        } else {
-          refetchAll();
-        }
-      });
+    queuedInsert("sorties_riz", {
+      id, date: input.date, commande_id: input.commandeId, lot_id: input.lotId,
+      categorie: input.categorie, quantite: input.quantite, prix_vente: input.prixVente,
+      boutique: input.boutique,
+    }).then(({ error, queued }) => {
+      if (error) {
+        console.error("[gestionStore] addSortieRiz:", error);
+        state = { ...state, sortiesRiz: state.sortiesRiz.filter((s) => s.id !== id) };
+        emit();
+      } else if (!queued) {
+        refetchAll();
+      }
+    });
 
     return id;
   },
@@ -201,21 +199,18 @@ export const gestionActions = {
     state = { ...state, receptionsExternes: [optimistic, ...state.receptionsExternes] };
     emit();
 
-    supabase
-      .from("receptions_riz_externe")
-      .insert({
-        id, date: input.date, entity_type: input.entityType, entity_name: input.entityName,
-        poids: input.poids, variete: input.variete, destination: input.destination,
-      })
-      .then(({ error }) => {
-        if (error) {
-          console.error("[gestionStore] addReceptionExterne:", error.message);
-          state = { ...state, receptionsExternes: state.receptionsExternes.filter((r) => r.id !== id) };
-          emit();
-        } else {
-          refetchAll();
-        }
-      });
+    queuedInsert("receptions_riz_externe", {
+      id, date: input.date, entity_type: input.entityType, entity_name: input.entityName,
+      poids: input.poids, variete: input.variete, destination: input.destination,
+    }).then(({ error, queued }) => {
+      if (error) {
+        console.error("[gestionStore] addReceptionExterne:", error);
+        state = { ...state, receptionsExternes: state.receptionsExternes.filter((r) => r.id !== id) };
+        emit();
+      } else if (!queued) {
+        refetchAll();
+      }
+    });
 
     return id;
   },

@@ -3,6 +3,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { toRow } from "./rowMap";
 import { supabase } from "./supabaseClient";
+import { queuedInsert } from "./offlineQueue";
 
 export type Depense = {
   id: string;
@@ -174,15 +175,13 @@ export const comptableActions = {
     const optimistic: Depense = { ...input, id };
     state = { ...state, depenses: [optimistic, ...state.depenses] };
     emit();
-    supabase
-      .from("depenses")
-      .insert({ id, date: input.date, lot_id: input.lotId, tiers: input.tiers, categorie: input.categorie, libelle: input.libelle, montant: input.montant })
-      .then(({ error }) => {
+    queuedInsert("depenses", { id, date: input.date, lot_id: input.lotId, tiers: input.tiers, categorie: input.categorie, libelle: input.libelle, montant: input.montant })
+      .then(({ error, queued }) => {
         if (error) {
-          console.error("[comptableStore] addDepense:", error.message);
+          console.error("[comptableStore] addDepense:", error);
           state = { ...state, depenses: state.depenses.filter((d) => d.id !== id) };
           emit();
-        } else refetchAll();
+        } else if (!queued) refetchAll();
       });
     return id;
   },
@@ -192,18 +191,16 @@ export const comptableActions = {
     const optimistic: Pret = { ...input, id };
     state = { ...state, prets: [optimistic, ...state.prets] };
     emit();
-    supabase
-      .from("prets")
-      .insert({
-        id, date: input.date, type: input.type, beneficiaire: input.beneficiaire, nature: input.nature,
-        unite: input.unite, montant_initial: input.montantInitial, description: input.description,
-      })
-      .then(({ error }) => {
+    queuedInsert("prets", {
+      id, date: input.date, type: input.type, beneficiaire: input.beneficiaire, nature: input.nature,
+      unite: input.unite, montant_initial: input.montantInitial, description: input.description,
+    })
+      .then(({ error, queued }) => {
         if (error) {
-          console.error("[comptableStore] addPret:", error.message);
+          console.error("[comptableStore] addPret:", error);
           state = { ...state, prets: state.prets.filter((p) => p.id !== id) };
           emit();
-        } else refetchAll();
+        } else if (!queued) refetchAll();
       });
     return id;
   },
@@ -213,15 +210,13 @@ export const comptableActions = {
     const optimistic: PretRemboursement = { ...input, id };
     state = { ...state, remboursements: [optimistic, ...state.remboursements] };
     emit();
-    supabase
-      .from("pret_remboursements")
-      .insert({ id, pret_id: input.pretId, date: input.date, montant: input.montant })
-      .then(({ error }) => {
+    queuedInsert("pret_remboursements", { id, pret_id: input.pretId, date: input.date, montant: input.montant })
+      .then(({ error, queued }) => {
         if (error) {
-          console.error("[comptableStore] addRemboursement:", error.message);
+          console.error("[comptableStore] addRemboursement:", error);
           state = { ...state, remboursements: state.remboursements.filter((r) => r.id !== id) };
           emit();
-        } else refetchAll();
+        } else if (!queued) refetchAll();
       });
     return id;
   },
@@ -231,18 +226,16 @@ export const comptableActions = {
     const optimistic: PrestationFacture = { ...input, id };
     state = { ...state, factures: [optimistic, ...state.factures] };
     emit();
-    supabase
-      .from("prestations_factures")
-      .insert({
-        id, date: input.date, lot_id: input.lotId, tiers: input.tiers, type_prestation: input.typePrestation,
-        montant_facture: input.montantFacture, echeance: input.echeance,
-      })
-      .then(({ error }) => {
+    queuedInsert("prestations_factures", {
+      id, date: input.date, lot_id: input.lotId, tiers: input.tiers, type_prestation: input.typePrestation,
+      montant_facture: input.montantFacture, echeance: input.echeance,
+    })
+      .then(({ error, queued }) => {
         if (error) {
-          console.error("[comptableStore] addFacture:", error.message);
+          console.error("[comptableStore] addFacture:", error);
           state = { ...state, factures: state.factures.filter((f) => f.id !== id) };
           emit();
-        } else refetchAll();
+        } else if (!queued) refetchAll();
       });
     return id;
   },
@@ -252,15 +245,13 @@ export const comptableActions = {
     const optimistic: PrestationEncaissement = { ...input, id };
     state = { ...state, encaissements: [optimistic, ...state.encaissements] };
     emit();
-    supabase
-      .from("prestation_encaissements")
-      .insert({ id, facture_id: input.factureId, date: input.date, montant: input.montant })
-      .then(({ error }) => {
+    queuedInsert("prestation_encaissements", { id, facture_id: input.factureId, date: input.date, montant: input.montant })
+      .then(({ error, queued }) => {
         if (error) {
-          console.error("[comptableStore] addEncaissement:", error.message);
+          console.error("[comptableStore] addEncaissement:", error);
           state = { ...state, encaissements: state.encaissements.filter((e) => e.id !== id) };
           emit();
-        } else refetchAll();
+        } else if (!queued) refetchAll();
       });
     return id;
   },

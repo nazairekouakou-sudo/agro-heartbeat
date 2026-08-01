@@ -6,6 +6,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { toRow } from "./rowMap";
 import { supabase } from "./supabaseClient";
+import { queuedInsert } from "./offlineQueue";
 
 export type Qualite = "Blanc" | "Moyen blanc" | "Rouge" | "Autre";
 export const QUALITES: Qualite[] = ["Blanc", "Moyen blanc", "Rouge", "Autre"];
@@ -223,24 +224,21 @@ export const usinageActions = {
     state = { ...state, decorticages: [optimistic, ...state.decorticages] };
     emit();
 
-    supabase
-      .from("decorticages")
-      .insert({
-        id, date: input.date, lot_id: input.lotId, sacs: input.sacs,
-        poids_paddy: input.poidsPaddy, th: input.th, lg1x: input.lg1x,
-        casse2x: input.casse2x, fb: input.fb, qualite: optimistic.qualite,
-        equipe: input.equipe, pu_usinage: input.puUsinage,
-      })
-      .then(({ error }) => {
-        if (error) {
-          console.error("[usinageStore] addDecorticage:", error.message);
-          state = { ...state, decorticages: state.decorticages.filter((d) => d.id !== id) };
-          emit();
-        } else {
-          refetchAll();
-          if (facturation) createFacturation(facturation, input.date, input.lotId);
-        }
-      });
+    queuedInsert("decorticages", {
+      id, date: input.date, lot_id: input.lotId, sacs: input.sacs,
+      poids_paddy: input.poidsPaddy, th: input.th, lg1x: input.lg1x,
+      casse2x: input.casse2x, fb: input.fb, qualite: optimistic.qualite,
+      equipe: input.equipe, pu_usinage: input.puUsinage,
+    }).then(({ error, queued }) => {
+      if (error) {
+        console.error("[usinageStore] addDecorticage:", error);
+        state = { ...state, decorticages: state.decorticages.filter((d) => d.id !== id) };
+        emit();
+      } else if (!queued) {
+        refetchAll();
+        if (facturation) createFacturation(facturation, input.date, input.lotId);
+      }
+    });
 
     return id;
   },
@@ -251,22 +249,19 @@ export const usinageActions = {
     state = { ...state, calibrages: [optimistic, ...state.calibrages] };
     emit();
 
-    supabase
-      .from("calibrages")
-      .insert({
-        id, date: input.date, lot_id: input.lotId, decorticage_id: input.decorticageId,
-        poids_avant: input.poidsAvant, poids_apres: input.poidsApres,
-        equipe: input.equipe, pu_calibrage: input.puCalibrage,
-      })
-      .then(({ error }) => {
-        if (error) {
-          console.error("[usinageStore] addCalibrage:", error.message);
-          state = { ...state, calibrages: state.calibrages.filter((c) => c.id !== id) };
-          emit();
-        } else {
-          refetchAll();
-        }
-      });
+    queuedInsert("calibrages", {
+      id, date: input.date, lot_id: input.lotId, decorticage_id: input.decorticageId,
+      poids_avant: input.poidsAvant, poids_apres: input.poidsApres,
+      equipe: input.equipe, pu_calibrage: input.puCalibrage,
+    }).then(({ error, queued }) => {
+      if (error) {
+        console.error("[usinageStore] addCalibrage:", error);
+        state = { ...state, calibrages: state.calibrages.filter((c) => c.id !== id) };
+        emit();
+      } else if (!queued) {
+        refetchAll();
+      }
+    });
 
     return id;
   },
@@ -280,23 +275,20 @@ export const usinageActions = {
     state = { ...state, tries: [optimistic, ...state.tries] };
     emit();
 
-    supabase
-      .from("tries")
-      .insert({
-        id, date: input.date, lot_id: input.lotId, lot_source: input.lotSource,
-        decorticage_id: input.decorticageId, riz_entree: input.rizEntree, riz_apres: input.rizApres,
-        residus: input.residus, agent: input.agent, pu_triage: input.puTriage,
-      })
-      .then(({ error }) => {
-        if (error) {
-          console.error("[usinageStore] addTrie:", error.message);
-          state = { ...state, tries: state.tries.filter((t) => t.id !== id) };
-          emit();
-        } else {
-          refetchAll();
-          if (facturation) createFacturation(facturation, input.date, input.lotId);
-        }
-      });
+    queuedInsert("tries", {
+      id, date: input.date, lot_id: input.lotId, lot_source: input.lotSource,
+      decorticage_id: input.decorticageId, riz_entree: input.rizEntree, riz_apres: input.rizApres,
+      residus: input.residus, agent: input.agent, pu_triage: input.puTriage,
+    }).then(({ error, queued }) => {
+      if (error) {
+        console.error("[usinageStore] addTrie:", error);
+        state = { ...state, tries: state.tries.filter((t) => t.id !== id) };
+        emit();
+      } else if (!queued) {
+        refetchAll();
+        if (facturation) createFacturation(facturation, input.date, input.lotId);
+      }
+    });
 
     return id;
   },

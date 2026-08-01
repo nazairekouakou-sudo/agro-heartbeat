@@ -4,6 +4,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { toRow } from "./rowMap";
 import { supabase } from "./supabaseClient";
+import { queuedInsert } from "./offlineQueue";
 
 export const BOUTIQUES = ["Dakar Centre", "St-Louis", "Thiès", "Louga"] as const;
 export type Boutique = (typeof BOUTIQUES)[number];
@@ -126,22 +127,19 @@ export const commercialActions = {
     state = { ...state, ventes: [optimistic, ...state.ventes] };
     emit();
 
-    supabase
-      .from("ventes_boutique")
-      .insert({
-        id, date: input.date, boutique: input.boutique, produit: input.produit,
-        stock_initial: input.stockInitial, entree: input.entree, sortie: input.sortie,
-        prix_vente: input.prixVente,
-      })
-      .then(({ error }) => {
-        if (error) {
-          console.error("[commercialStore] addVente:", error.message);
-          state = { ...state, ventes: state.ventes.filter((v) => v.id !== id) };
-          emit();
-        } else {
-          refetchAll();
-        }
-      });
+    queuedInsert("ventes_boutique", {
+      id, date: input.date, boutique: input.boutique, produit: input.produit,
+      stock_initial: input.stockInitial, entree: input.entree, sortie: input.sortie,
+      prix_vente: input.prixVente,
+    }).then(({ error, queued }) => {
+      if (error) {
+        console.error("[commercialStore] addVente:", error);
+        state = { ...state, ventes: state.ventes.filter((v) => v.id !== id) };
+        emit();
+      } else if (!queued) {
+        refetchAll();
+      }
+    });
 
     return id;
   },
@@ -152,21 +150,18 @@ export const commercialActions = {
     state = { ...state, versements: [optimistic, ...state.versements] };
     emit();
 
-    supabase
-      .from("versements_caisse")
-      .insert({
-        id, date: input.date, boutique: input.boutique, montant_verse: input.montantVerse,
-        solde_restant: input.soldeRestant, agent: input.agent,
-      })
-      .then(({ error }) => {
-        if (error) {
-          console.error("[commercialStore] addVersement:", error.message);
-          state = { ...state, versements: state.versements.filter((v) => v.id !== id) };
-          emit();
-        } else {
-          refetchAll();
-        }
-      });
+    queuedInsert("versements_caisse", {
+      id, date: input.date, boutique: input.boutique, montant_verse: input.montantVerse,
+      solde_restant: input.soldeRestant, agent: input.agent,
+    }).then(({ error, queued }) => {
+      if (error) {
+        console.error("[commercialStore] addVersement:", error);
+        state = { ...state, versements: state.versements.filter((v) => v.id !== id) };
+        emit();
+      } else if (!queued) {
+        refetchAll();
+      }
+    });
 
     return id;
   },

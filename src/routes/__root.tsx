@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppSidebar } from "@/components/AppSidebar";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { Toaster } from "@/components/ui/sonner";
 
 
@@ -134,6 +135,7 @@ function RootComponent() {
       <div className="flex min-h-screen bg-background text-foreground">
         <AppSidebar />
         <main className="flex-1 flex flex-col min-w-0">
+          <OfflineBanner />
           <Outlet />
         </main>
       </div>
