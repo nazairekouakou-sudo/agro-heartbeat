@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { usePaddy, paddyActions, paddyCrud, reliquat, type Entity, type LotStatus } from "@/lib/paddyStore";
 import { useVarieteNoms } from "@/lib/varietesStore";
+import { useCampagneNoms, useCampagneActive } from "@/lib/campagnesStore";
 import { RowActions } from "@/components/RowActions";
 import { useUsinage } from "@/lib/usinageStore";
 import { useTarifs } from "@/lib/tarifsStore";
@@ -43,6 +44,7 @@ function PaddyPage() {
   const [detailLot, setDetailLot] = useState<string | null>(null);
   const { appros, sechages, sorties } = usePaddy();
   const varieteNoms = useVarieteNoms();
+  const campagneNoms = useCampagneNoms();
 
   const filteredAppros = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -106,9 +108,10 @@ function PaddyPage() {
 
         {tab === "appro" && (
           <DataTable
-            columns={["N° Lot", "Date entrée", "Zone", "Entité", "Fournisseur", "Variété", "TH", "TI", "Sacs", "Poids (kg)", "PM", "Statut", "Agent", ""]}
+            columns={["N° Lot", "Campagne", "Date entrée", "Zone", "Entité", "Fournisseur", "Variété", "TH", "TI", "Sacs", "Poids (kg)", "PM", "Statut", "Agent", ""]}
             rows={filteredAppros.map((a) => [
               <button className="text-primary hover:underline font-medium" onClick={() => setDetailLot(a.id)}>{a.id}</button>,
+              a.campagne || "—",
               fmtDate(a.dateEntree),
               a.zone,
               <EntityBadge k={a.entity} name={a.entityName} />,
@@ -126,6 +129,7 @@ function PaddyPage() {
                 label={a.id}
                 values={a as unknown as Record<string, unknown>}
                 fields={[
+                  { key: "campagne", label: "Campagne", type: "select", options: campagneNoms },
                   { key: "dateEntree", label: "Date entrée", type: "date" },
                   { key: "zone", label: "Zone" },
                   { key: "entityName", label: "Entité" },
@@ -295,9 +299,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const varieteNoms = useVarieteNoms();
+  const campagneNoms = useCampagneNoms();
+  const campagneActive = useCampagneActive();
   const nextId = paddyActions.nextLotId();
   const [form, setForm] = useState({
     dateEntree: paddyActions.todayISO(),
+    campagne: "",
     zone: "", entity: "CAPI" as Entity, entityName: "CAPI", variete: "JT 11",
     th: 22, ti: 3, sacs: 0, poids: 0, agent: "", fournisseur: "",
     pu: 300, charge: 0, pesage: 0, dechargement: 0,
@@ -309,6 +316,7 @@ function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void 
   const capCompte = form.entity === "CAPI" ? cap : 0;
   const total = capCompte + form.charge + form.pesage + form.dechargement + form.transport + form.fraisAnnexes + form.prime;
   const estTiers = form.entity !== "CAPI";
+  const campagne = form.campagne || campagneActive;
 
   function submit() {
     if (!form.zone || !form.agent || !form.sacs) {
@@ -328,6 +336,7 @@ function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void 
       pu: form.pu, charge: form.charge, pesage: form.pesage,
       dechargement: form.dechargement, transport: form.transport,
       fraisAnnexes: form.fraisAnnexes, prime: form.prime,
+      campagne,
       fournisseur: form.entity === "CAPI" ? form.fournisseur.trim() : null,
       tranche: estTiers ? form.tranche : null,
     });
@@ -345,6 +354,16 @@ function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void 
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <Field label="Date d'entrée"><Input type="date" value={form.dateEntree} onChange={(e) => setForm({ ...form, dateEntree: e.target.value })} /></Field>
+          <Field label="Campagne">
+            <Select value={campagne} onValueChange={(v) => setForm({ ...form, campagne: v })}>
+              <SelectTrigger><SelectValue placeholder="Choisir une campagne" /></SelectTrigger>
+              <SelectContent>
+                {campagneNoms.map((c) => (
+                  <SelectItem key={c} value={c}>{c}{c === campagneActive ? " (en cours)" : ""}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
           <Field label="Zone"><Input value={form.zone} placeholder="Podor, Rosso…" onChange={(e) => setForm({ ...form, zone: e.target.value })} /></Field>
           <Field label="Agent"><Input value={form.agent} onChange={(e) => setForm({ ...form, agent: e.target.value })} /></Field>
 
