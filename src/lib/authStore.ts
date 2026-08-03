@@ -97,7 +97,7 @@ export function useAuth() {
   useEffect(() => {
     ensureInit();
   }, []);
-  return useSyncExternalStore(subscribe, getSnapshot, () => ({ status: "loading" as const, userId: null, profile: null }));
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 const PIN_DOMAIN = "capi.internal";
