@@ -51,6 +51,12 @@ function subscribe(l: () => void) {
 function getSnapshot() {
   return state;
 }
+// Doit être une référence stable : un nouvel objet à chaque appel fait planter
+// React pendant l'hydratation (« getServerSnapshot should be cached »).
+const SERVER_STATE: State = { status: "loading", userId: null, profile: null };
+function getServerSnapshot() {
+  return SERVER_STATE;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function profileFromRow(r: any): Profile {
@@ -97,7 +103,7 @@ export function useAuth() {
   useEffect(() => {
     ensureInit();
   }, []);
-  return useSyncExternalStore(subscribe, getSnapshot, () => ({ status: "loading" as const, userId: null, profile: null }));
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 const PIN_DOMAIN = "capi.internal";
