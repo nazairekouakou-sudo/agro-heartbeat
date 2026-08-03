@@ -4,6 +4,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { toRow } from "./rowMap";
 import { supabase } from "./supabaseClient";
+import { makeScheduler } from "./refetchScheduler";
 import { queuedInsert } from "./offlineQueue";
 
 // Les boutiques sont désormais gérées dans Paramètres (voir boutiquesStore.ts).
@@ -74,6 +75,8 @@ function versementFromRow(r: any): VersementCaisse {
 
 // ---------- Chargement + temps réel ----------
 
+const scheduleRefetch = makeScheduler(() => refetchAll());
+
 let initPromise: Promise<void> | null = null;
 
 async function refetchAll() {
@@ -102,8 +105,8 @@ function ensureRealtime() {
   realtimeStarted = true;
   supabase
     .channel("commercial-changes")
-    .on("postgres_changes", { event: "*", schema: "public", table: "ventes_boutique" }, () => refetchAll())
-    .on("postgres_changes", { event: "*", schema: "public", table: "versements_caisse" }, () => refetchAll())
+    .on("postgres_changes", { event: "*", schema: "public", table: "ventes_boutique" }, () => scheduleRefetch())
+    .on("postgres_changes", { event: "*", schema: "public", table: "versements_caisse" }, () => scheduleRefetch())
     .subscribe();
 }
 
@@ -136,7 +139,7 @@ export const commercialActions = {
         state = { ...state, ventes: state.ventes.filter((v) => v.id !== id) };
         emit();
       } else if (!queued) {
-        refetchAll();
+        scheduleRefetch();
       }
     });
 
@@ -158,7 +161,7 @@ export const commercialActions = {
         state = { ...state, versements: state.versements.filter((v) => v.id !== id) };
         emit();
       } else if (!queued) {
-        refetchAll();
+        scheduleRefetch();
       }
     });
 

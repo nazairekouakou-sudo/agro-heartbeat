@@ -3,6 +3,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { toRow } from "./rowMap";
 import { supabase } from "./supabaseClient";
+import { makeScheduler } from "./refetchScheduler";
 import { queuedInsert } from "./offlineQueue";
 
 export type Depense = {
@@ -112,6 +113,8 @@ function encaissementFromRow(r: any): PrestationEncaissement {
   return { id: r.id, factureId: r.facture_id, date: r.date, montant: Number(r.montant) };
 }
 
+const scheduleRefetch = makeScheduler(() => refetchAll());
+
 let initPromise: Promise<void> | null = null;
 
 async function refetchAll() {
@@ -151,11 +154,11 @@ function ensureRealtime() {
   realtimeStarted = true;
   supabase
     .channel("comptable-changes")
-    .on("postgres_changes", { event: "*", schema: "public", table: "depenses" }, () => refetchAll())
-    .on("postgres_changes", { event: "*", schema: "public", table: "prets" }, () => refetchAll())
-    .on("postgres_changes", { event: "*", schema: "public", table: "pret_remboursements" }, () => refetchAll())
-    .on("postgres_changes", { event: "*", schema: "public", table: "prestations_factures" }, () => refetchAll())
-    .on("postgres_changes", { event: "*", schema: "public", table: "prestation_encaissements" }, () => refetchAll())
+    .on("postgres_changes", { event: "*", schema: "public", table: "depenses" }, () => scheduleRefetch())
+    .on("postgres_changes", { event: "*", schema: "public", table: "prets" }, () => scheduleRefetch())
+    .on("postgres_changes", { event: "*", schema: "public", table: "pret_remboursements" }, () => scheduleRefetch())
+    .on("postgres_changes", { event: "*", schema: "public", table: "prestations_factures" }, () => scheduleRefetch())
+    .on("postgres_changes", { event: "*", schema: "public", table: "prestation_encaissements" }, () => scheduleRefetch())
     .subscribe();
 }
 
@@ -181,7 +184,7 @@ export const comptableActions = {
           console.error("[comptableStore] addDepense:", error);
           state = { ...state, depenses: state.depenses.filter((d) => d.id !== id) };
           emit();
-        } else if (!queued) refetchAll();
+        } else if (!queued) scheduleRefetch();
       });
     return id;
   },
@@ -200,7 +203,7 @@ export const comptableActions = {
           console.error("[comptableStore] addPret:", error);
           state = { ...state, prets: state.prets.filter((p) => p.id !== id) };
           emit();
-        } else if (!queued) refetchAll();
+        } else if (!queued) scheduleRefetch();
       });
     return id;
   },
@@ -216,7 +219,7 @@ export const comptableActions = {
           console.error("[comptableStore] addRemboursement:", error);
           state = { ...state, remboursements: state.remboursements.filter((r) => r.id !== id) };
           emit();
-        } else if (!queued) refetchAll();
+        } else if (!queued) scheduleRefetch();
       });
     return id;
   },
@@ -235,7 +238,7 @@ export const comptableActions = {
           console.error("[comptableStore] addFacture:", error);
           state = { ...state, factures: state.factures.filter((f) => f.id !== id) };
           emit();
-        } else if (!queued) refetchAll();
+        } else if (!queued) scheduleRefetch();
       });
     return id;
   },
@@ -251,7 +254,7 @@ export const comptableActions = {
           console.error("[comptableStore] addEncaissement:", error);
           state = { ...state, encaissements: state.encaissements.filter((e) => e.id !== id) };
           emit();
-        } else if (!queued) refetchAll();
+        } else if (!queued) scheduleRefetch();
       });
     return id;
   },

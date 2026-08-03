@@ -6,6 +6,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { toRow } from "./rowMap";
 import { supabase } from "./supabaseClient";
+import { makeScheduler } from "./refetchScheduler";
 import { queuedInsert } from "./offlineQueue";
 
 export type Qualite = "Blanc" | "Moyen blanc" | "Rouge" | "Autre";
@@ -167,6 +168,8 @@ export function mkTrie(
 
 // ---------- Chargement + temps réel ----------
 
+const scheduleRefetch = makeScheduler(() => refetchAll());
+
 let initPromise: Promise<void> | null = null;
 
 async function refetchAll() {
@@ -198,9 +201,9 @@ function ensureRealtime() {
   realtimeStarted = true;
   supabase
     .channel("usinage-changes")
-    .on("postgres_changes", { event: "*", schema: "public", table: "decorticages" }, () => refetchAll())
-    .on("postgres_changes", { event: "*", schema: "public", table: "calibrages" }, () => refetchAll())
-    .on("postgres_changes", { event: "*", schema: "public", table: "tries" }, () => refetchAll())
+    .on("postgres_changes", { event: "*", schema: "public", table: "decorticages" }, () => scheduleRefetch())
+    .on("postgres_changes", { event: "*", schema: "public", table: "calibrages" }, () => scheduleRefetch())
+    .on("postgres_changes", { event: "*", schema: "public", table: "tries" }, () => scheduleRefetch())
     .subscribe();
 }
 
@@ -235,7 +238,7 @@ export const usinageActions = {
         state = { ...state, decorticages: state.decorticages.filter((d) => d.id !== id) };
         emit();
       } else if (!queued) {
-        refetchAll();
+        scheduleRefetch();
         if (facturation) createFacturation(facturation, input.date, input.lotId);
       }
     });
@@ -259,7 +262,7 @@ export const usinageActions = {
         state = { ...state, calibrages: state.calibrages.filter((c) => c.id !== id) };
         emit();
       } else if (!queued) {
-        refetchAll();
+        scheduleRefetch();
       }
     });
 
@@ -285,7 +288,7 @@ export const usinageActions = {
         state = { ...state, tries: state.tries.filter((t) => t.id !== id) };
         emit();
       } else if (!queued) {
-        refetchAll();
+        scheduleRefetch();
         if (facturation) createFacturation(facturation, input.date, input.lotId);
       }
     });
