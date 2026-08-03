@@ -95,7 +95,7 @@ async function refetchAll() {
 }
 
 function ensureLoaded() {
-  if (!initPromise) initPromise = scheduleRefetch();
+  if (!initPromise) initPromise = refetchAll();
   return initPromise;
 }
 
