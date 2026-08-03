@@ -2,6 +2,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { toRow } from "./rowMap";
 import { supabase } from "./supabaseClient";
+import { makeScheduler } from "./refetchScheduler";
 import { queuedInsert } from "./offlineQueue";
 
 type Facturation = { tiers: string; montantFacture: number; typePrestation: "sechage" | "collecte" };
@@ -182,6 +183,8 @@ function mkAppro(
 
 // ---------- Chargement + temps réel ----------
 
+const scheduleRefetch = makeScheduler(() => refetchAll());
+
 let initPromise: Promise<void> | null = null;
 
 async function refetchAll() {
@@ -203,7 +206,7 @@ async function refetchAll() {
 }
 
 function ensureLoaded() {
-  if (!initPromise) initPromise = refetchAll();
+  if (!initPromise) initPromise = scheduleRefetch();
   return initPromise;
 }
 
@@ -213,9 +216,9 @@ function ensureRealtime() {
   realtimeStarted = true;
   supabase
     .channel("paddy-changes")
-    .on("postgres_changes", { event: "*", schema: "public", table: "appros" }, () => refetchAll())
-    .on("postgres_changes", { event: "*", schema: "public", table: "sechages" }, () => refetchAll())
-    .on("postgres_changes", { event: "*", schema: "public", table: "sorties" }, () => refetchAll())
+    .on("postgres_changes", { event: "*", schema: "public", table: "appros" }, () => scheduleRefetch())
+    .on("postgres_changes", { event: "*", schema: "public", table: "sechages" }, () => scheduleRefetch())
+    .on("postgres_changes", { event: "*", schema: "public", table: "sorties" }, () => scheduleRefetch())
     .subscribe();
 }
 
@@ -270,7 +273,7 @@ export const paddyActions = {
         state = { ...state, appros: state.appros.filter((a) => a.id !== id) };
         emit();
       } else if (!queued) {
-        refetchAll();
+        scheduleRefetch();
         // Prestation de service pour les tiers : les charges annexes de
         // réception (déchargement, transport, pesage) sont facturées au
           // partenaire/prestataire, pas absorbées comme coût CAPI.
@@ -325,7 +328,7 @@ export const paddyActions = {
           if (lot && lot.entity !== "CAPI") {
             await creerFacturePrestation({ tiers: lot.entityName, montantFacture: montant, typePrestation: "sechage" }, input.lotId, input.date);
           }
-          refetchAll();
+          scheduleRefetch();
         }
       } catch (e) {
         console.error("[paddyStore] addSechage (hors ligne ?):", e);
@@ -362,7 +365,7 @@ export const paddyActions = {
           .eq("id", input.lotId);
         if (approErr) console.error("[paddyStore] update appro after sortie:", approErr.message);
 
-        if (!queued) refetchAll();
+        if (!queued) scheduleRefetch();
       } catch (e) {
         console.error("[paddyStore] addSortie (hors ligne ?):", e);
       }

@@ -3,6 +3,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { toRow } from "./rowMap";
 import { supabase } from "./supabaseClient";
+import { makeScheduler } from "./refetchScheduler";
 import { queuedInsert } from "./offlineQueue";
 import type { Entity } from "./paddyStore";
 
@@ -121,6 +122,8 @@ function validationFromRow(r: any): Validation {
 
 // ---------- Chargement + temps réel ----------
 
+const scheduleRefetch = makeScheduler(() => refetchAll());
+
 let initPromise: Promise<void> | null = null;
 
 async function refetchAll() {
@@ -142,7 +145,7 @@ async function refetchAll() {
 }
 
 function ensureLoaded() {
-  if (!initPromise) initPromise = refetchAll();
+  if (!initPromise) initPromise = scheduleRefetch();
   return initPromise;
 }
 
@@ -152,9 +155,9 @@ function ensureRealtime() {
   realtimeStarted = true;
   supabase
     .channel("gestion-changes")
-    .on("postgres_changes", { event: "*", schema: "public", table: "sorties_riz" }, () => refetchAll())
-    .on("postgres_changes", { event: "*", schema: "public", table: "receptions_riz_externe" }, () => refetchAll())
-    .on("postgres_changes", { event: "*", schema: "public", table: "validations" }, () => refetchAll())
+    .on("postgres_changes", { event: "*", schema: "public", table: "sorties_riz" }, () => scheduleRefetch())
+    .on("postgres_changes", { event: "*", schema: "public", table: "receptions_riz_externe" }, () => scheduleRefetch())
+    .on("postgres_changes", { event: "*", schema: "public", table: "validations" }, () => scheduleRefetch())
     .subscribe();
 }
 
@@ -186,7 +189,7 @@ export const gestionActions = {
         state = { ...state, sortiesRiz: state.sortiesRiz.filter((s) => s.id !== id) };
         emit();
       } else if (!queued) {
-        refetchAll();
+        scheduleRefetch();
       }
     });
 
@@ -208,7 +211,7 @@ export const gestionActions = {
         state = { ...state, receptionsExternes: state.receptionsExternes.filter((r) => r.id !== id) };
         emit();
       } else if (!queued) {
-        refetchAll();
+        scheduleRefetch();
       }
     });
 
@@ -224,7 +227,7 @@ export const gestionActions = {
     const { error } = await supabase.from("receptions_riz_externe").update({ statut }).eq("id", id);
     if (error) {
       console.error("[gestionStore] updateReceptionStatut:", error.message);
-      refetchAll();
+      scheduleRefetch();
     }
   },
 
@@ -243,7 +246,7 @@ export const gestionActions = {
       .eq("id", id);
     if (error) {
       console.error("[gestionStore] resolveValidation:", error.message);
-      refetchAll();
+      scheduleRefetch();
     }
   },
 
@@ -262,7 +265,7 @@ export const gestionActions = {
       .eq("id", id);
     if (error) {
       console.error("[gestionStore] payValidation:", error.message);
-      refetchAll();
+      scheduleRefetch();
     }
   },
 };
