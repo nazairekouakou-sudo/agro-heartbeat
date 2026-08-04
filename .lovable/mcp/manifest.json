@@ -1,0 +1,144 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://bjvvanbmqxqesljmgfsp.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "capi-harmony",
+      "version": "0.1.0",
+      "title": "CAPI Harmony"
+    },
+    "tools": [
+      {
+        "name": "resume_activite",
+        "title": "Résumé d'activité",
+        "description": "Résumé chiffré de la chaîne de valeur : nombre de lots paddy, opérations d'usinage, commandes de riz, ventes et versements caisse.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_lots_paddy",
+        "title": "Lister les lots de paddy",
+        "description": "Liste les approvisionnements de paddy (lots) avec leurs charges, filtrables par campagne.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "campagne": {
+              "type": "string",
+              "description": "Nom de la campagne agricole, ex. 2025-2026."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Nombre maximum de lots à retourner (défaut 25)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_lot_paddy",
+        "title": "Détail d'un lot de paddy",
+        "description": "Retourne le parcours complet d'un lot : approvisionnement, séchages, sorties, décorticages, calibrages et tries.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "lot_id": {
+              "type": "string",
+              "description": "Identifiant du lot, ex. PAD-2607-0221."
+            }
+          },
+          "required": [
+            "lot_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_usinage",
+        "title": "Lister les opérations d'usinage",
+        "description": "Liste les décorticages avec rendements, taux de casse et coûts d'usinage.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "lot_id": {
+              "type": "string",
+              "description": "Filtrer sur un lot précis."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Nombre maximum d'opérations (défaut 25)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_ventes",
+        "title": "Lister les ventes boutique",
+        "description": "Liste les ventes enregistrées en boutique (stocks, quantités vendues, montants).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "boutique": {
+              "type": "string",
+              "description": "Nom de la boutique."
+            },
+            "depuis": {
+              "type": "string",
+              "description": "Date de début au format AAAA-MM-JJ."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Nombre maximum de lignes (défaut 50)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

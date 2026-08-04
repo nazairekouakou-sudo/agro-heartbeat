@@ -8,11 +8,17 @@ import { authActions, useAuth, ROLE_HOME } from "@/lib/authStore";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Connexion — CAPI ERP" }] }),
+  validateSearch: (s: Record<string, unknown>): { next?: string } => {
+    const next = typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : undefined;
+    return next ? { next } : {};
+  },
+
   component: LoginPage,
 });
 
 function LoginPage() {
   const router = useRouter();
+  const { next } = Route.useSearch();
   const { status, profile } = useAuth();
   const [mode, setMode] = useState<"pin" | "email">("pin");
   const [pin, setPin] = useState("");
@@ -22,10 +28,16 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (status === "signed-in" && profile) {
+    if (status !== "signed-in") return;
+    if (next) {
+      window.location.href = next;
+      return;
+    }
+    if (profile) {
       router.navigate({ to: ROLE_HOME[profile.role] as "/" });
     }
-  }, [status, profile, router]);
+  }, [status, profile, router, next]);
+
 
   async function submitPin(e: React.FormEvent) {
     e.preventDefault();
