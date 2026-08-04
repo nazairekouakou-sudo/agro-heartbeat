@@ -2,6 +2,7 @@
 // écritures faites sans réseau (stockées sur l'appareil), et les
 // synchronise automatiquement dès que la connexion revient.
 import { useEffect, useSyncExternalStore } from "react";
+import { toast } from "sonner";
 import { supabase } from "./supabaseClient";
 
 const QUEUE_KEY = "capi-offline-queue";
