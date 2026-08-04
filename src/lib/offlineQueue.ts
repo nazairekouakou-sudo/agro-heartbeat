@@ -129,9 +129,20 @@ export async function queuedInsert(
   try {
     const { error } = await supabase.from(table).insert(payload);
     if (error) {
+      // Sans ce retour visible, la ligne ajoutée disparaît sans explication.
+      const { data } = await supabase.auth.getSession();
+      const hint = !data.session
+        ? "Tu n'es pas (ou plus) connecté : reconnecte-toi puis réessaie."
+        : /row-level security/i.test(error.message)
+          ? "Ton rôle n'a pas le droit d'écrire dans cette table."
+          : /column|schema cache/i.test(error.message)
+            ? "La base de données n'est pas à jour pour ce formulaire."
+            : error.message;
+      toast.error("Enregistrement impossible", { description: hint });
       return { error: error.message, queued: false };
     }
     return { error: null, queued: false };
+
   } catch {
     // Échec réseau (fetch a levé une exception) : file d'attente
     enqueue(table, payload);
