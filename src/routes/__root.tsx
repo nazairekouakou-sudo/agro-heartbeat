@@ -12,6 +12,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppSidebar } from "@/components/AppSidebar";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -47,13 +49,16 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+      <div className="max-w-lg w-full text-center">
+        <h1 className="font-display text-xl tracking-tight text-foreground">
+          Cette page n'a pas pu s'afficher
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          Tes données enregistrées ne sont pas perdues. Réessaie ci-dessous.
         </p>
+        <pre className="mt-3 max-h-32 overflow-auto rounded-md bg-muted p-3 text-left text-xs text-muted-foreground whitespace-pre-wrap">
+          {error.message}
+        </pre>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -62,19 +67,20 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            Réessayer
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Go home
+            Accueil
           </a>
         </div>
       </div>
     </div>
   );
 }
+
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
@@ -145,7 +151,10 @@ function RootComponent() {
         <AppSidebar />
         <main className="flex-1 flex flex-col min-w-0">
           <OfflineBanner />
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
+
         </main>
       </div>
       <Toaster />
