@@ -316,6 +316,7 @@ function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void 
   const capCompte = form.entity === "CAPI" ? cap : 0;
   const total = capCompte + form.charge + form.pesage + form.dechargement + form.transport + form.fraisAnnexes + form.prime;
   const estTiers = form.entity !== "CAPI";
+  const puDesactive = form.entity === "Prestataire"; // le prestataire facture un service, pas un prix d'achat
   const campagne = form.campagne || campagneActive;
 
   function submit() {
