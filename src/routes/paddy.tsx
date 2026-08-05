@@ -369,7 +369,17 @@ function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void 
           <Field label="Agent"><Input value={form.agent} onChange={(e) => setForm({ ...form, agent: e.target.value })} /></Field>
 
           <Field label="Entité">
-            <Select value={form.entity} onValueChange={(v: Entity) => setForm({ ...form, entity: v, entityName: v === "CAPI" ? "CAPI" : form.entityName })}>
+          <Select
+              value={form.entity}
+              onValueChange={(v: Entity) =>
+                setForm({
+                  ...form,
+                  entity: v,
+                  entityName: v === "CAPI" ? "CAPI" : form.entityName,
+                  pu: v === "CAPI" ? 300 : 0,
+                })
+              }
+            >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="CAPI">CAPI (compte propre)</SelectItem>
