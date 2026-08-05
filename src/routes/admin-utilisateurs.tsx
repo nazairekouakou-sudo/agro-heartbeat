@@ -185,20 +185,23 @@ function NewEmployeDialog({ open, onClose, onCreated }: { open: boolean; onClose
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke("admin-create-account", {
-      body: { fullName, role, pin },
-    });
-    setLoading(false);
-    if (error || data?.error) {
-      toast.error("Erreur : " + (data?.error ?? error?.message ?? "inconnue"));
-      return;
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const accessToken = sess.session?.access_token;
+      if (!accessToken) throw new Error("Session expirée, reconnecte-toi.");
+      await createAccount({ data: { accessToken, fullName, role, pin } });
+      toast.success(`Compte créé pour ${fullName}. PIN : ${pin}`);
+      setFullName("");
+      setPin(randomPin());
+      onCreated();
+      onClose();
+    } catch (e) {
+      toast.error("Erreur : " + (e instanceof Error ? e.message : "inconnue"));
+    } finally {
+      setLoading(false);
     }
-    toast.success(`Compte créé pour ${fullName}. PIN : ${pin}`);
-    setFullName("");
-    setPin(randomPin());
-    onCreated();
-    onClose();
   }
+
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
