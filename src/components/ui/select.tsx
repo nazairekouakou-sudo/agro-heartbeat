@@ -107,7 +107,11 @@ SelectLabel.displayName = SelectPrimitive.Label.displayName;
 const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, ...props }, ref) =>
+  // Radix lève une exception si la valeur est vide : une donnée incomplète
+  // venant de la base ferait alors planter toute la page. On ignore la ligne.
+  typeof props.value !== "string" || props.value.trim() === "" ? null : (
+
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
