@@ -7,6 +7,7 @@ import { Lock } from "lucide-react";
 import { usePaddy, type Appro, type LotStatus } from "@/lib/paddyStore";
 import { useUsinage } from "@/lib/usinageStore";
 import { useGestion } from "@/lib/gestionStore";
+import { useAuth } from "@/lib/authStore";
 
 export const Route = createFileRoute("/partenaires")({
   head: () => ({
@@ -46,16 +47,22 @@ function etapeLot(a: Appro, hasDecorticage: boolean, hasSortieRiz: boolean): str
 }
 
 function PartenairesPage() {
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === "admin";
+
   const { appros } = usePaddy();
   const { decorticages } = useUsinage();
   const { sortiesRiz, validations } = useGestion();
 
+  // Liste complète des partenaires : utile uniquement pour l'aperçu admin
+  // (sélecteur ci-dessous). Un compte "partenaire" est cloisonné sur son
+  // propre entityName et ne peut jamais parcourir les données d'un autre.
   const partenaires = useMemo(
     () => Array.from(new Set(appros.filter((a) => a.entity === "Partenaire").map((a) => a.entityName))),
     [appros],
   );
   const [selected, setSelected] = useState<string>("");
-  const actif = selected || partenaires[0] || "";
+  const actif = isAdmin ? selected || partenaires[0] || "" : profile?.entityName || "";
 
   const mesLots = useMemo(() => appros.filter((a) => a.entityName === actif), [appros, actif]);
   const lotIds = useMemo(() => new Set(mesLots.map((a) => a.id)), [mesLots]);
@@ -127,7 +134,11 @@ function PartenairesPage() {
       <div className="p-6 space-y-6 overflow-y-auto">
         <PageHeader
           title="Portail Partenaires"
-          description="Aperçu administrateur des portails cloisonnés. Chaque partenaire ne voit que ses propres données en production."
+          description={
+            isAdmin
+              ? "Aperçu administrateur des portails cloisonnés. Chaque partenaire ne voit que ses propres données."
+              : "Vos lots, votre stock et vos flux financiers — visibles uniquement par vous."
+          }
           actions={
             <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-gold/20 text-gold-foreground">
               <Lock className="size-3.5" /> Données cloisonnées
@@ -135,7 +146,11 @@ function PartenairesPage() {
           }
         />
 
-        {partenaires.length === 0 ? (
+        {!isAdmin && !actif ? (
+          <div className="card-elevated p-8 text-center text-sm text-muted-foreground">
+            Votre compte n'est rattaché à aucune entité partenaire. Contactez un administrateur.
+          </div>
+        ) : partenaires.length === 0 && isAdmin ? (
           <div className="card-elevated p-8 text-center text-sm text-muted-foreground">
             Aucun partenaire dans les données pour l'instant. Les partenaires apparaissent ici dès qu'un
             approvisionnement Paddy leur est rattaché.
@@ -147,15 +162,21 @@ function PartenairesPage() {
                 <div className="text-[11px] uppercase tracking-widest text-muted-foreground">Aperçu partenaire</div>
                 <h3 className="font-display text-lg">{actif}</h3>
               </div>
-              <select
-                value={actif}
-                onChange={(e) => setSelected(e.target.value)}
-                className="h-9 px-3 rounded-md border border-border bg-card text-sm"
-              >
-                {partenaires.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
+              {isAdmin ? (
+                <select
+                  value={actif}
+                  onChange={(e) => setSelected(e.target.value)}
+                  className="h-9 px-3 rounded-md border border-border bg-card text-sm"
+                >
+                  {partenaires.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-gold/20 text-gold-foreground">
+                  <Lock className="size-3.5" /> Accès cloisonné
+                </span>
+              )}
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
