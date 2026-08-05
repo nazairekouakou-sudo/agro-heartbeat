@@ -36,7 +36,7 @@ const allNavGroups: { label: string; items: NavItem[] }[] = [
         label: "Tableau de bord",
         icon: LayoutDashboard,
         exact: true,
-        roles: ["admin", "paddy", "usinage", "gestion", "commercial", "comptable", "partenaire"],
+        roles: ["admin", "gestion" ],
       },
       { to: "/reporting", label: "Reporting", icon: FileBarChart, roles: ["admin", "gestion"] },
     ],
