@@ -16,13 +16,14 @@ export const createAccount = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { createClient } = await import("@supabase/supabase-js");
 
-    const url = process.env["SUPABASE_URL"];
-    const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
-    if (!url || !serviceKey) {
+    const url = "https://bjvvanbmqxqesljmgfsp.supabase.co";
+    const serviceKey = process.env["CAPI_SERVICE_ROLE_KEY"];
+    if (!serviceKey) {
       throw new Error(
-        "Configuration serveur manquante : SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY.",
+        "Clé de service manquante côté serveur (CAPI_SERVICE_ROLE_KEY). Ajoute-la dans les secrets du projet.",
       );
     }
+
 
     const admin = createClient(url, serviceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
