@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
+import { createAccount } from "@/lib/adminAccounts.functions";
+
 import { usePaddy } from "@/lib/paddyStore";
 import type { AppRole } from "@/lib/authStore";
 
