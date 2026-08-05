@@ -149,7 +149,10 @@ function RootComponent() {
         <AppSidebar />
         <main className="flex-1 flex flex-col min-w-0">
           <OfflineBanner />
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
+
         </main>
       </div>
       <Toaster />
