@@ -257,19 +257,24 @@ function NewPartenaireDialog({
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke("admin-create-account", {
-      body: { fullName, role: "partenaire", email, password, entityName },
-    });
-    setLoading(false);
-    if (error || data?.error) {
-      toast.error("Erreur : " + (data?.error ?? error?.message ?? "inconnue"));
-      return;
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const accessToken = sess.session?.access_token;
+      if (!accessToken) throw new Error("Session expirée, reconnecte-toi.");
+      await createAccount({
+        data: { accessToken, fullName, role: "partenaire", email, password, entityName },
+      });
+      toast.success(`Compte partenaire créé pour ${fullName}.`);
+      setFullName(""); setEntityName(""); setEmail(""); setPassword("");
+      onCreated();
+      onClose();
+    } catch (e) {
+      toast.error("Erreur : " + (e instanceof Error ? e.message : "inconnue"));
+    } finally {
+      setLoading(false);
     }
-    toast.success(`Compte partenaire créé pour ${fullName}.`);
-    setFullName(""); setEntityName(""); setEmail(""); setPassword("");
-    onCreated();
-    onClose();
   }
+
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
