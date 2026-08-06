@@ -1,6 +1,7 @@
 import { Bell, Search, LogOut, User, Settings, CheckCircle2 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { useAuth, authActions } from "@/lib/authStore";
+import { useNotifications } from "@/lib/notifications";
 import { MobileSidebarTrigger } from "@/components/AppSidebar";
 import {
   DropdownMenu,
@@ -23,32 +24,6 @@ const roleLabels: Record<string, string> = {
   partenaire: "Partenaire",
 };
 
-type Notif = { id: string; title: string; body: string; time: string; read: boolean };
-
-const INITIAL_NOTIFS: Notif[] = [
-  {
-    id: "n1",
-    title: "Nouveau lot paddy réceptionné",
-    body: "PAD-2607-0042 — 12,4 t enregistrées par Silué Abou.",
-    time: "Il y a 5 min",
-    read: false,
-  },
-  {
-    id: "n2",
-    title: "Décorticage terminé",
-    body: "Lot PAD-2607-0039 — rendement 63,8%, qualité Blanc.",
-    time: "Il y a 42 min",
-    read: false,
-  },
-  {
-    id: "n3",
-    title: "Grille tarifaire mise à jour",
-    body: "Koné Sarah a modifié les PU d'usinage.",
-    time: "Hier",
-    read: true,
-  },
-];
-
 export function AppTopbar({
   eyebrow,
   title,
@@ -59,19 +34,12 @@ export function AppTopbar({
   actions?: ReactNode;
 }) {
   const { profile } = useAuth();
-  const [notifs, setNotifs] = useState<Notif[]>(INITIAL_NOTIFS);
-  const unread = notifs.filter((n) => !n.read).length;
+  const { notifs, unread, markOneRead, markAllRead } = useNotifications();
 
   const initials = profile?.fullName
     ? profile.fullName.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase()
     : "—";
 
-  function markAllRead() {
-    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
-  }
-  function markOneRead(id: string) {
-    setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-  }
 
   return (
     <header className="h-16 border-b border-border bg-card/60 backdrop-blur px-6 flex items-center gap-4 shrink-0">
