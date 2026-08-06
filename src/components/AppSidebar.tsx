@@ -59,7 +59,7 @@ const allNavGroups: { label: string; items: NavItem[] }[] = [
     label: "Administration",
     items: [
       { to: "/admin-utilisateurs", label: "Gestion des comptes", icon: UserCog, roles: ["admin"] },
-      { to: "/admin-parametres", label: "Grille tarifaire", icon: Settings, roles: ["admin"] },
+      { to: "/admin-parametres", label: "Paramètres", icon: Settings, roles: ["admin"] },
     ],
   },
 ];
