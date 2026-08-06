@@ -313,7 +313,7 @@ function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void 
 
   const pm = form.sacs ? +(form.poids / form.sacs).toFixed(2) : 0;
   const cap = form.poids * form.pu;
-  const capCompte = form.entity === "CAPI" ? cap : 0;
+  const capCompte = cap;
   const total = capCompte + form.charge + form.pesage + form.dechargement + form.transport + form.fraisAnnexes + form.prime;
   const estTiers = form.entity !== "CAPI";
   const puDesactive = form.entity === "Prestataire"; // le prestataire facture un service, pas un prix d'achat
@@ -424,7 +424,9 @@ function NewApproDialog({ open, onClose }: { open: boolean; onClose: () => void 
             <Input type="number" value={form.poids || ""} onChange={(e) => setForm({ ...form, poids: +e.target.value })} />
           </Field>
           <Field label="PM (auto)"><Input value={pm} disabled /></Field>
-          <Field label="PU (F/kg)"><Input type="number" value={form.pu} onChange={(e) => setForm({ ...form, pu: +e.target.value })} disabled={estTiers} /></Field>
+          <Field label={estTiers ? "PU (F/kg) — optionnel, si CAPI achète pour le compte du partenaire" : "PU (F/kg)"}>
+            <Input type="number" value={form.pu || ""} onChange={(e) => setForm({ ...form, pu: +e.target.value })} />
+          </Field>
         </div>
         {estTiers && (
           <p className="text-xs text-muted-foreground -mt-1">
