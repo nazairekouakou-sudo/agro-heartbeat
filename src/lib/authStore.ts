@@ -118,5 +118,8 @@ export const authActions = {
   },
   async signOut() {
     await supabase.auth.signOut();
+    // Les données déjà chargées restent en mémoire : on repart d'une page
+    // vierge pour que la session suivante lise des données fraîches.
+    if (typeof window !== "undefined") window.location.replace("/login");
   },
 };
