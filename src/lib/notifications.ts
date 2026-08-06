@@ -97,12 +97,12 @@ export function useNotifications(limit = 15) {
         body: `${d.lotId} — rendement ${nf(d.rendement, 1)}%, qualité ${d.qualite}`,
       });
     }
-    for (const t of tries ?? []) {
+    for (const t of tries) {
       raw.push({
         id: `trie:${t.id}`,
         date: t.date,
         title: "Trie optique réalisée",
-        body: `${t.lotId ?? t.id} — récupération ${nf(t.tauxRecuperation ?? 0, 1)}%`,
+        body: `${t.lotId} — récupération ${nf(t.tauxRecuperation, 1)}%`,
       });
     }
     for (const v of ventes) {
